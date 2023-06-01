@@ -159,10 +159,10 @@ def Trading(symb: str, interval: str,client):
   Cont = 0 #Contador para poder generar registros consecutivos en archivos externos
   posicion_list = [] #Lista que contendra las ordenes 
   while(True):
+    time.sleep(10)
     df = get_data(symb, interval)
     df = CalculateSupertrend(df)
     Revisar_Arreglo(posicion_list,df,client,Cont)
-    time.sleep(10)
     if(Polaridad != df['Polaridad'].iloc[-1]):
       '''
       Caso 1 : Para compra long en futures
@@ -185,6 +185,7 @@ def Trading(symb: str, interval: str,client):
       if(df['Close'].iloc[-1] <= df['Supertrend'].iloc[-1] and df['Polaridad'].iloc[-1] == -1):
         if(df['Close'].iloc[-1] <= df['DEMA800'].iloc[-1]):
           #cantidad = float(Get_Balance(client,'USDT'))*0.02
+          cantidad = 0.01
           order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[-1])
           res = order.make_order(str(int(df['Supertrend'].iloc[-1])), client)
           Cont = EscribirRegistros(Cont, df,'Open',order.side,str(res))
