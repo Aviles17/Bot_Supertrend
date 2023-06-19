@@ -87,12 +87,12 @@ def EscribirRegistros(Contador : int, df : pd.DataFrame, tipo: str, side: str, m
   if(tipo == 'Open'):
     #Escribir registros de un Close
     if(side == 'Buy'):
-      edit.write("Open| " + str(df['Time'].iloc[-1]) + " | LONG \n")
-      edit.write(mensaje)
-      edit.write("Close_Price: {Price}, Supertrend: {Supertrend}, Polaridad: {Polaridad}".format(Price = str(df['Close'].iloc[-1]),
+      edit.write("Open | " + str(df['Time'].iloc[-1]) + " | LONG \n")
+      edit.write(mensaje + "\n")
+      edit.write("Close_Price: {Price}, Supertrend: {Supertrend}, Polaridad: {Polaridad}\n".format(Price = str(df['Close'].iloc[-1]),
                                                                                                  Supertrend = str(df['Supertrend'].iloc[-1]),
                                                                                                  Polaridad = str(df['Polaridad'].iloc[-1])))
-      edit.write("#FIN#")
+      edit.write("#FIN#\n")
       
       Contador += 1
       edit.close()
@@ -100,12 +100,12 @@ def EscribirRegistros(Contador : int, df : pd.DataFrame, tipo: str, side: str, m
       
     #Escribir registros de un Short  
     if(side == 'Sell'):
-      edit.write("Open| " + str(df['Time'].iloc[-1]) + " | SHORT \n")
-      edit.write(mensaje)
-      edit.write("Close_Price: {Price}, Supertrend: {Supertrend}, Polaridad: {Polaridad}".format(Price = str(df['Close'].iloc[-1]),
+      edit.write("Open | " + str(df['Time'].iloc[-1]) + " | SHORT \n")
+      edit.write(mensaje + "\n")
+      edit.write("Close_Price: {Price}, Supertrend: {Supertrend}, Polaridad: {Polaridad}\n".format(Price = str(df['Close'].iloc[-1]),
                                                                                                  Supertrend = str(df['Supertrend'].iloc[-1]),
                                                                                                  Polaridad = str(df['Polaridad'].iloc[-1])))
-      edit.write("#FIN#")
+      edit.write("#FIN#\n")
       
       Contador += 1
       edit.close()
@@ -114,12 +114,12 @@ def EscribirRegistros(Contador : int, df : pd.DataFrame, tipo: str, side: str, m
   #Si la operacion que se hizo fue cerrar una posicion    
   elif(tipo == 'Close'):
     if(side == 'Buy'):
-      edit.write("Close| " + str(df['Time'].iloc[-1]) + " | LONG \n")
-      edit.write(mensaje)
-      edit.write("Close_Price: {Price}, Supertrend: {Supertrend}, Polaridad: {Polaridad}".format(Price = str(df['Close'].iloc[-1]),
+      edit.write("Close | " + str(df['Time'].iloc[-1]) + " | LONG \n")
+      edit.write(mensaje + "\n")
+      edit.write("Close_Price: {Price}, Supertrend: {Supertrend}, Polaridad: {Polaridad}\n".format(Price = str(df['Close'].iloc[-1]),
                                                                                                  Supertrend = str(df['Supertrend'].iloc[-1]),
                                                                                                  Polaridad = str(df['Polaridad'].iloc[-1])))
-      edit.write("#FIN#")
+      edit.write("#FIN#\n")
       
       Contador += 1
       edit.close()
@@ -127,12 +127,12 @@ def EscribirRegistros(Contador : int, df : pd.DataFrame, tipo: str, side: str, m
       
     if(side == 'Sell'):
       
-      edit.write("Close| " + str(df['Time'].iloc[-1]) + " | SHORT \n")
+      edit.write("Close | " + str(df['Time'].iloc[-1]) + " | SHORT \n")
       edit.write(mensaje)
-      edit.write("Close_Price: {Price}, Supertrend: {Supertrend}, Polaridad: {Polaridad}".format(Price = str(df['Close'].iloc[-1]),
+      edit.write("Close_Price: {Price}, Supertrend: {Supertrend}, Polaridad: {Polaridad}\n".format(Price = str(df['Close'].iloc[-1]),
                                                                                                  Supertrend = str(df['Supertrend'].iloc[-1]),
                                                                                                  Polaridad = str(df['Polaridad'].iloc[-1])))
-      edit.write("#FIN#")
+      edit.write("#FIN#\n")
       
       Contador += 1
       edit.close()
@@ -146,11 +146,26 @@ def EscribirRegistros(Contador : int, df : pd.DataFrame, tipo: str, side: str, m
   
   
 def Revisar_Arreglo(arr, df : pd.DataFrame, client, contador : int):
-  if(len(arr) != 0 or contador == 0):
+  Cont = contador
+  updated_arr = [] #Nuevo contenedor [Normlamente retorna vacio]
+  if(len(arr) != 0):
     for posicion in arr:
       if(posicion.label != df['Polaridad'].iloc[-1]):
         res = posicion.close_order(client)
-        EscribirRegistros(contador,df,'Close', posicion.side, str(res))
+        Cont = EscribirRegistros(Cont,df,'Close', posicion.side, str(res))
+      elif(posicion.side == 'Buy' and posicion.stoploss >= df['Close'].iloc[-1]):
+        #Orden cierra auto
+        Cont = EscribirRegistros(Cont,df,'Close', posicion.side, "Cerrada por Stoploss")
+      elif(posicion.side == 'Sell' and posicion.stoploss <= df['Close'].iloc[-1]):
+        #Orden cierra auto
+        Cont = EscribirRegistros(Cont,df,'Close', posicion.side, "Cerrada por Stoploss")
+      else:
+        updated_arr.append(posicion)
+        
+  return updated_arr, Cont 
+        
+        
+          
     
 
 
@@ -162,7 +177,7 @@ def Trading(symb: str, interval: str,client):
     time.sleep(10)
     df = get_data(symb, interval)
     df = CalculateSupertrend(df)
-    Revisar_Arreglo(posicion_list,df,client,Cont)
+    posicion_list, Cont = Revisar_Arreglo(posicion_list,df,client,Cont)
     if(Polaridad != df['Polaridad'].iloc[-1]):
       '''
       Caso 1 : Para compra long en futures
@@ -171,8 +186,8 @@ def Trading(symb: str, interval: str,client):
         if(df['Close'].iloc[-1] >= df['DEMA800'].iloc[-1]):
           #cantidad = float(Get_Balance(client,'USDT'))*0.02
           cantidad = 0.01
-          order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[-1])
-          res = order.make_order(str(int(df['Supertrend'].iloc[-1])), client)
+          order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[-1],str(int(df['Supertrend'].iloc[-1])))
+          res = order.make_order(client)
           Cont = EscribirRegistros(Cont, df,'Open',order.side,str(res))
           posicion_list.append(order)
           Polaridad = df['Polaridad'].iloc[-1]
@@ -186,8 +201,8 @@ def Trading(symb: str, interval: str,client):
         if(df['Close'].iloc[-1] <= df['DEMA800'].iloc[-1]):
           #cantidad = float(Get_Balance(client,'USDT'))*0.02
           cantidad = 0.01
-          order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[-1])
-          res = order.make_order(str(int(df['Supertrend'].iloc[-1])), client)
+          order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[-1],str(int(df['Supertrend'].iloc[-1])))
+          res = order.make_order(client)
           Cont = EscribirRegistros(Cont, df,'Open',order.side,str(res))
           posicion_list.append(order)
           Polaridad = df['Polaridad'].iloc[-1]
