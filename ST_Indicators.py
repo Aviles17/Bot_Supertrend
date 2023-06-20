@@ -52,7 +52,7 @@ def get_data(symbol: str,interval: str,unixtimeinterval: int = 1080000):
         print(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
         time.sleep(10)
       except requests.RequestException as e:
-        print(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
+        print(f"Error occurred: {e}, Retrying in 10 seconds...\n")
         time.sleep(10)
     df = pd.DataFrame(data['result'])
     df = df.drop_duplicates()
