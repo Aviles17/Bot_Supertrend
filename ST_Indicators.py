@@ -5,7 +5,7 @@ import time
 import pandas_ta as ta 
 import numpy as np
 import pytz
-import Posicion
+from Posicion import Posicion
 
 PATH = ""
 
@@ -44,7 +44,16 @@ def get_data(symbol: str,interval: str,unixtimeinterval: int = 1080000):
   while(unixtimeinterval != 0):
     start= str(since - unixtimeinterval)
     url = 'http://api.bybit.com/public/linear/kline?symbol='+symbol+'&interval='+interval+'&from='+str(start)
-    data = requests.get(url).json()
+    while(True):
+      try:
+        data = requests.get(url).json()
+        break
+      except requests.exceptions.ConnectionError as e:
+        print(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
+        time.sleep(10)
+      except requests.RequestException as e:
+        print(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
+        time.sleep(10)
     df = pd.DataFrame(data['result'])
     df = df.drop_duplicates()
     df['open_time'] = df['open_time'].apply(lambda x: datetime.fromtimestamp(x, tz=pytz.UTC))
@@ -153,10 +162,10 @@ def Revisar_Arreglo(arr, df : pd.DataFrame, client, contador : int):
       if(posicion.label != df['Polaridad'].iloc[-1]):
         res = posicion.close_order(client)
         Cont = EscribirRegistros(Cont,df,'Close', posicion.side, str(res))
-      elif(posicion.side == 'Buy' and posicion.stoploss >= df['Close'].iloc[-1]):
+      elif(posicion.side == 'Buy' and float(posicion.stoploss) >= df['Close'].iloc[-1]):
         #Orden cierra auto
         Cont = EscribirRegistros(Cont,df,'Close', posicion.side, "Cerrada por Stoploss")
-      elif(posicion.side == 'Sell' and posicion.stoploss <= df['Close'].iloc[-1]):
+      elif(posicion.side == 'Sell' and float(posicion.stoploss) <= df['Close'].iloc[-1]):
         #Orden cierra auto
         Cont = EscribirRegistros(Cont,df,'Close', posicion.side, "Cerrada por Stoploss")
       else:
