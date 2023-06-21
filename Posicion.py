@@ -24,7 +24,6 @@ class Posicion:
                     tp_trigger_by='LastPrice', 
                     sl_trigger_by='MarkPrice', 
                     price=None).result()
-                print(res)
                 break
             except OSError as e:
                 print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
@@ -53,7 +52,6 @@ class Posicion:
                         sl_trigger_by='MarkPrice',
                         price=None
                         ).result()
-                    print(res)
                     break
                 except OSError as e:
                     print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
@@ -80,7 +78,6 @@ class Posicion:
                         sl_trigger_by='MarkPrice',
                         price=None
                         ).result()
-                    print(res)
                     break
                 except OSError as e:
                     print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")

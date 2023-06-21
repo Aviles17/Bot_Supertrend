@@ -7,6 +7,7 @@ import numpy as np
 import pytz
 from Posicion import Posicion
 
+#Direccion donde se quieren almacenar los archivos de Log en formato txt (Llenar dependiendo de su dispositivo local)
 PATH = ""
 
 '''
@@ -30,11 +31,12 @@ def Get_Balance(cliente,symbol: str):
 '''
 ###################################################################################
 [Proposito]: Funcion para obtener informacion cada minuto de una moneda en especifico
-[Parametros]: symbol (Simbolo de la moneda que se quiere analizar, Ejemplo : BTCUSDT)
+[Parametros]: symbol (Simbolo de la moneda que se quiere analizar, Ejemplo : BTCUSDT),
+              interval (String que representa el intervalo en el que se van a trabajar los datos, Ejemplo: '15' para 15 minutos)
 [Retorno]: Dataframe de pandas con la informacion solicitada
 ###################################################################################
 '''
-def get_data(symbol: str,interval: str,unixtimeinterval: int = 1080000):
+def get_data(symbol: str,interval: str,unixtimeinterval: int = 1800000):
 
   list_registers = []
   DATA_200 = 180000
@@ -64,18 +66,19 @@ def get_data(symbol: str,interval: str,unixtimeinterval: int = 1080000):
     list_registers.append(df)
     unixtimeinterval = unixtimeinterval - DATA_200
     
-  concatenated_df = pd.concat([list_registers[0], list_registers[1], list_registers[2], list_registers[3], list_registers[4], list_registers[5]], axis=0)
+  concatenated_df = pd.concat([list_registers[0], list_registers[1], list_registers[2], list_registers[3], list_registers[4], list_registers[5], list_registers[6], list_registers[7], list_registers[8], list_registers[9]], axis=0)
   concatenated_df = concatenated_df.reset_index(drop=True)
 
   return concatenated_df
 
 '''
 ###################################################################################
-[Proposito]: Funcion para calcular las lineas que representan el SuperTrend superior e inferior y sus etiquetas
-[Parametros]: symbol (String que representa la moneda a la que se va a suscribir), df (Dataframe con la informacion del activo), mult (Multiplicador para calcular SuperTrend)
+[Proposito]: Funcion para calcular las lineas que representan el SuperTrend superior e inferior, sus etiquetas e indicadores correspondientes
+[Parametros]: symbol (String que representa la moneda a la que se va a suscribir), 
+              df (Dataframe con la informacion del activo), 
+              mult (Multiplicador para calcular SuperTrend)
 [Retorno]: Retorna el dataframe modificado, con columnas añadidas 
 ###################################################################################
-
 '''
 def CalculateSupertrend(data: pd.DataFrame):
   Temp_Trend = ta.supertrend(
@@ -89,7 +92,17 @@ def CalculateSupertrend(data: pd.DataFrame):
   df_merge['DEMA800'] = ta.dema(df_merge['Close'], length=800)
   return df_merge
 
-        
+'''
+###################################################################################
+[Proposito]: Funcion para escribir los registros de las ordenes que se han hecho en formato txt segun el PATH seleccionado
+[Parametros]: Contador (Numero entero que determina en que registro se esta), 
+              df (Dataframe con la informacion del activo), 
+              tipo (El tipo de transaccion que se hizo, apertura o cerrar), 
+              side (Lado o tipo de orden que se ejecuto, Buy or Sell), 
+              mensaje (El mensaje de retorno de la peticion HTTP de bybit)
+[Retorno]: Retorna la variable Contador con la informacion actualizada de que se añadio
+###################################################################################
+'''
 def EscribirRegistros(Contador : int, df : pd.DataFrame, tipo: str, side: str, mensaje: str):
   edit = open(PATH + str(Contador) + ".txt",'w')
   #Si la operacion que se hizo fue abrir una posicion
@@ -153,7 +166,15 @@ def EscribirRegistros(Contador : int, df : pd.DataFrame, tipo: str, side: str, m
     edit.close()  
     return Contador
   
-  
+'''
+###################################################################################
+[Proposito]: Funcion para revisar las ordenes en cola que aun no se han vendido
+[Parametros]: arr (Arreglo con las ordenes que se han hecho), df (Dataframe con la informacion del activo), 
+              client (Cliente de Bybit creado en el archivo principal "Bot_SuperTrend.py"), 
+              contador (Variable numerica que determina el registro en el que se esta)
+[Retorno]: Retorna el arreglo con las ordenes que no se ejecutaron y el contador actualizado
+###################################################################################
+'''
 def Revisar_Arreglo(arr, df : pd.DataFrame, client, contador : int):
   Cont = contador
   updated_arr = [] #Nuevo contenedor [Normlamente retorna vacio]
@@ -173,10 +194,15 @@ def Revisar_Arreglo(arr, df : pd.DataFrame, client, contador : int):
         
   return updated_arr, Cont 
         
-        
-          
-    
-
+'''
+###################################################################################
+[Proposito]: Funcion para poner en funcionamiento el bot
+[Parametros]: symb (Simbolo de la moneda con la que se quiere trabajar, Ejemplo : BTCUSDT), 
+              client (Cliente de Bybit creado en el archivo principal "Bot_SuperTrend.py"), 
+              interval (String que representa el intervalo en el que se van a trabajar los datos, Ejemplo: '15' para 15 minutos)
+[Retorno]: No tiene retorno, es un bucle infinito
+###################################################################################
+'''       
 
 def Trading(symb: str, interval: str,client):
   Polaridad = "" #Valor del close para comparar registros y evitar repeticiones
