@@ -217,7 +217,7 @@ def Trading(symb: str, interval: str,client):
       '''
       Caso 1 : Para compra long en futures
       '''
-      if(df['Close'].iloc[-1] >= df['Supertrend'].iloc[-1] and df['Polaridad'].iloc[-1] == 1):
+      if(df['Close'].iloc[-1] >= df['Supertrend'].iloc[-1] and df['Polaridad'].iloc[-1] == 1 and df['Polaridad'].iloc[-1] != df['Polaridad'].iloc[-2]):
         if(df['Close'].iloc[-1] >= df['DEMA800'].iloc[-1]):
           #cantidad = float(Get_Balance(client,'USDT'))*0.02
           cantidad = 0.01
@@ -232,7 +232,7 @@ def Trading(symb: str, interval: str,client):
       '''
       Caso 2 : Para compra shorts en futures
       '''
-      if(df['Close'].iloc[-1] <= df['Supertrend'].iloc[-1] and df['Polaridad'].iloc[-1] == -1):
+      if(df['Close'].iloc[-1] <= df['Supertrend'].iloc[-1] and df['Polaridad'].iloc[-1] == -1 and df['Polaridad'].iloc[-1] != df['Polaridad'].iloc[-2]):
         if(df['Close'].iloc[-1] <= df['DEMA800'].iloc[-1]):
           #cantidad = float(Get_Balance(client,'USDT'))*0.02
           cantidad = 0.01
