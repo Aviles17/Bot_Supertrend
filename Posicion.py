@@ -1,12 +1,13 @@
 import time
 class Posicion:
     #Constructor del Objeto
-    def __init__(self,side: str, symbol: str, amount: float, label: int, stoploss: str):
+    def __init__(self,side: str, symbol: str, amount: float, label: int, stoploss: str, price: float):
         self.side = side
         self.symbol = symbol
         self.amount = amount
         self.label = label
         self.stoploss = stoploss
+        self.price = price
     
     def make_order(self, client):
         while(True):
@@ -24,6 +25,7 @@ class Posicion:
                     tp_trigger_by='LastPrice', 
                     sl_trigger_by='MarkPrice', 
                     price=None).result()
+                print(res)
                 break
             except OSError as e:
                 print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
@@ -90,6 +92,25 @@ class Posicion:
         else:
             res = 'La orden seleccionada no se ha creado correctamente'
             return res
+            
+    def is_profit(self, current_pice: float):
+        
+        if self.side == 'Buy':
+            if self.price < current_pice:
+                return True
+            else:
+                return False
+        elif self.side == 'Sell':
+            if self.price > current_pice:
+                return True
+            else:
+                return False
+        else:
+            print('La orden seleccionada no se ha creado correctamente')
+            return None
+            
+            
+        
             
             
     

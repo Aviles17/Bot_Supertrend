@@ -180,7 +180,7 @@ def Revisar_Arreglo(arr, df : pd.DataFrame, client, contador : int):
   updated_arr = [] #Nuevo contenedor [Normlamente retorna vacio]
   if(len(arr) != 0):
     for posicion in arr:
-      if(posicion.label != df['Polaridad'].iloc[-2]):
+      if(posicion.label != df['Polaridad'].iloc[-2] and posicion.is_profit(float(df['Close'].iloc[-1]))):
         res = posicion.close_order(client)
         Cont = EscribirRegistros(Cont,df,'Close', posicion.side, str(res))
       elif(posicion.side == 'Buy' and float(posicion.stoploss) >= df['Close'].iloc[-2]):
@@ -194,9 +194,12 @@ def Revisar_Arreglo(arr, df : pd.DataFrame, client, contador : int):
         
   return updated_arr, Cont 
 '''
-[Proposito]:
-[Parametros]:
-[Retorno]: 
+###################################################################################
+[Proposito]: Actualizar la polaridad que regula el sistema aunque no exista una compra
+[Parametros]: Polaridad (Valor de la polaridad del Dataframe de la moneda, Ejemplo: 1,-1 o 0)
+              df(Pandas Dataframe que contiene la información de la moneda)
+[Retorno]: Retorna la modificación o version actualizada del valor de la Polaridad
+###################################################################################
 '''
 def Polaridad_Manage(Polaridad: int, df: pd.DataFrame):
   if(Polaridad == 0):
@@ -206,6 +209,22 @@ def Polaridad_Manage(Polaridad: int, df: pd.DataFrame):
     return Polaridad
   elif(Polaridad != 0 and Polaridad == df["Polaridad"].iloc[-2]):
     return Polaridad
+  
+'''
+###################################################################################
+[Proposito]: 
+[Parametros]:
+[Retorno]:
+###################################################################################
+'''
+def get_symb(cont: int, symb_list: list, MAX_CURRENCY: int):
+  symb = symb_list[cont]
+  print(symb)
+  if(cont == MAX_CURRENCY):
+    return symb, 0
+  else:
+    cont += 1
+    return symb, cont
         
 '''
 ###################################################################################
@@ -217,15 +236,17 @@ def Polaridad_Manage(Polaridad: int, df: pd.DataFrame):
 ###################################################################################
 '''       
 
-def Trading(symb: str, interval: str,client):
+def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int):
   Polaridad = 0 #Valor del close para comparar registros y evitar repeticiones
   Cont = 0 #Contador para poder generar registros consecutivos en archivos externos
   posicion_list = [] #Lista que contendra las ordenes 
+  symb_cont = 0 #Contador de symbolos (Determina cual stock observar)
   while(True):
+    symb, symb_cont = get_symb(symb_cont, symb_list, MAX_CURRENCY)
     time.sleep(60)
     df = get_data(symb, interval)
     df = CalculateSupertrend(df)
-    posicion_list, Cont = Revisar_Arreglo(posicion_list,df,client,Cont)
+    posicion_list, Cont = Revisar_Arreglo(posicion_list, df, client, Cont)
     if(Polaridad != df['Polaridad'].iloc[-2]):
       '''
       Caso 1 : Para compra long en futures
@@ -234,7 +255,7 @@ def Trading(symb: str, interval: str,client):
         if(df['Close'].iloc[-2] >= df['DEMA800'].iloc[-2]):
           #cantidad = float(Get_Balance(client,'USDT'))*0.02
           cantidad = 0.01
-          order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[-2],str(int(df['Supertrend'].iloc[-2])))
+          order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[-2],str(int(df['Supertrend'].iloc[-2])), float(df['Close'].iloc[-1]))
           res = order.make_order(client)
           Cont = EscribirRegistros(Cont, df,'Open',order.side,str(res))
           posicion_list.append(order)
@@ -249,7 +270,7 @@ def Trading(symb: str, interval: str,client):
         if(df['Close'].iloc[-2] <= df['DEMA800'].iloc[-2]):
           #cantidad = float(Get_Balance(client,'USDT'))*0.02
           cantidad = 0.01
-          order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[-2],str(int(df['Supertrend'].iloc[-2])))
+          order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[-2],str(int(df['Supertrend'].iloc[-2])), float(df['Close'].iloc[-1]))
           res = order.make_order(client)
           Cont = EscribirRegistros(Cont, df,'Open',order.side,str(res))
           posicion_list.append(order)
