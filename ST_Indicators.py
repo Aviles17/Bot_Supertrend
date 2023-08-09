@@ -203,7 +203,8 @@ def Revisar_Arreglo(arr, df : pd.DataFrame, client, contador : int):
 '''
 def Polaridad_Manage(Polaridad: int, df: pd.DataFrame):
   if(Polaridad == 0):
-    return Polaridad
+    #return Polaridad
+    return df["Polaridad"].iloc[-2]
   elif(Polaridad != 0 and Polaridad != df["Polaridad"].iloc[-2]):
     Polaridad = df["Polaridad"].iloc[-2]
     return Polaridad
@@ -219,7 +220,6 @@ def Polaridad_Manage(Polaridad: int, df: pd.DataFrame):
 '''
 def get_symb(cont: int, symb_list: list, MAX_CURRENCY: int):
   symb = symb_list[cont]
-  print(symb)
   if(cont == MAX_CURRENCY):
     return symb, 0
   else:
@@ -248,6 +248,11 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int):
     df = CalculateSupertrend(df)
     posicion_list, Cont = Revisar_Arreglo(posicion_list, df, client, Cont)
     if(Polaridad != df['Polaridad'].iloc[-2]):
+      print(f"La polaridad es : {Polaridad} a relacion de la del df {df['Polaridad'].iloc[-2]}")
+      print("Registro de la posicion -1: ")
+      print(df.iloc[-1])
+      print("Datos DF: ")
+      print(df.tail(5))
       '''
       Caso 1 : Para compra long en futures
       '''
@@ -260,6 +265,7 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int):
           Cont = EscribirRegistros(Cont, df,'Open',order.side,str(res))
           posicion_list.append(order)
           Polaridad = df['Polaridad'].iloc[-2]
+          print(f"Valor de la polaridad al ser cambiada por orden: {Polaridad}")
           if(Cont >= 10):
             Cont = 0
           
@@ -275,12 +281,14 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int):
           Cont = EscribirRegistros(Cont, df,'Open',order.side,str(res))
           posicion_list.append(order)
           Polaridad = df['Polaridad'].iloc[-2]
+          print(f"Valor de la polaridad al ser cambiada por orden: {Polaridad}")
           if(Cont >= 10):
             Cont = 0
       '''
       Caso 3 : Ninguna compra, actualizar polaridad si es que cambia
       '''
       Polaridad = Polaridad_Manage(Polaridad, df)
+      print(f"Polaridad despues de la revision : {Polaridad}")
       
           
       

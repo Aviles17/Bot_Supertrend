@@ -2,7 +2,7 @@ import ST_Indicators
 import bybit
 import Credenciales as id
 
-COIN_SUPPORT = ['ETHUSDT','XRPUSDT'] #Monedas en las cuales se ejecutaran operaciones
+COIN_SUPPORT = ['ETHUSDT'] #Monedas en las cuales se ejecutaran operaciones ['XRPUSDT']
 
 client = bybit.bybit(test=False, api_key= id.Api_Key, api_secret=id.Api_Secret)
 print('Login successful')
