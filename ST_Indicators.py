@@ -217,14 +217,16 @@ def Polaridad_Manage(Polaridad: int, df: pd.DataFrame):
 [Retorno]:
 ###################################################################################
 '''
-def get_symb(cont: int, symb_list: list, MAX_CURRENCY: int):
+def get_symb(cont: int, symb_list: list, MAX_CURRENCY: int, cantidades_simetricas: list):
   symb = symb_list[cont]
+  cantidades = cantidades_simetricas[cont]
   print(symb)
+  print(cantidades)
   if(cont == MAX_CURRENCY):
-    return symb, 0
+    return symb, 0, cantidades
   else:
     cont += 1
-    return symb, cont
+    return symb, cont, cantidades
         
 '''
 ###################################################################################
@@ -236,13 +238,14 @@ def get_symb(cont: int, symb_list: list, MAX_CURRENCY: int):
 ###################################################################################
 '''       
 
-def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int):
+def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int, cantidades_simetricas: list):
   Polaridad = 0 #Valor del close para comparar registros y evitar repeticiones
   Cont = 0 #Contador para poder generar registros consecutivos en archivos externos
   posicion_list = [] #Lista que contendra las ordenes 
   symb_cont = 0 #Contador de symbolos (Determina cual stock observar)
   while(True):
-    symb, symb_cont = get_symb(symb_cont, symb_list, MAX_CURRENCY)
+    symb, symb_cont, cantidad = get_symb(symb_cont, symb_list, MAX_CURRENCY, cantidades_simetricas)
+    print(f"Coin: {symb} | cantidad: {cantidad}")
     time.sleep(60)
     df = get_data(symb, interval)
     df = CalculateSupertrend(df)
@@ -254,7 +257,6 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int):
       if(df['Close'].iloc[-2] >= df['Supertrend'].iloc[-2] and df['Polaridad'].iloc[-2] == 1 and df['Polaridad'].iloc[-2] != df['Polaridad'].iloc[-3]):
         if(df['Close'].iloc[-2] >= df['DEMA800'].iloc[-2]):
           #cantidad = float(Get_Balance(client,'USDT'))*0.02
-          cantidad = 0.01
           order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[-2],str(int(df['Supertrend'].iloc[-2])), float(df['Close'].iloc[-1]))
           res = order.make_order(client)
           Cont = EscribirRegistros(Cont, df,'Open',order.side,str(res))
@@ -269,7 +271,6 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int):
       if(df['Close'].iloc[-2] <= df['Supertrend'].iloc[-2] and df['Polaridad'].iloc[-2] == -1 and df['Polaridad'].iloc[-2] != df['Polaridad'].iloc[-3]):
         if(df['Close'].iloc[-2] <= df['DEMA800'].iloc[-2]):
           #cantidad = float(Get_Balance(client,'USDT'))*0.02
-          cantidad = 0.01
           order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[-2],str(int(df['Supertrend'].iloc[-2])), float(df['Close'].iloc[-1]))
           res = order.make_order(client)
           Cont = EscribirRegistros(Cont, df,'Open',order.side,str(res))
