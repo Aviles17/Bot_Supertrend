@@ -220,8 +220,6 @@ def Polaridad_Manage(Polaridad: int, df: pd.DataFrame):
 def get_symb(cont: int, symb_list: list, MAX_CURRENCY: int, cantidades_simetricas: list):
   symb = symb_list[cont]
   cantidades = cantidades_simetricas[cont]
-  print(symb)
-  print(cantidades)
   if(cont == MAX_CURRENCY):
     return symb, 0, cantidades
   else:
@@ -245,7 +243,6 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int, cantidades
   symb_cont = 0 #Contador de symbolos (Determina cual stock observar)
   while(True):
     symb, symb_cont, cantidad = get_symb(symb_cont, symb_list, MAX_CURRENCY, cantidades_simetricas)
-    print(f"Coin: {symb} | cantidad: {cantidad}")
     time.sleep(60)
     df = get_data(symb, interval)
     df = CalculateSupertrend(df)
