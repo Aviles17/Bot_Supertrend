@@ -271,6 +271,7 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int, cantidades
           #cantidad = float(Get_Balance(client,'USDT'))*0.02
           order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[-2],str(round(float(df['Supertrend'].iloc[-1]),4)), float(df['Close'].iloc[-1]))
           res = order.make_order(client)
+          print(res)
           Cont = EscribirRegistros(Cont, df,'Open',order.side,str(res))
           posicion_list.append(order)
           Polaridad_l[symb_cont] = df['Polaridad'].iloc[-2]
