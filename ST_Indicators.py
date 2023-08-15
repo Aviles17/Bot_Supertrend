@@ -178,9 +178,14 @@ def EscribirRegistros(Contador : int, df : pd.DataFrame, tipo: str, side: str, m
 def Revisar_Arreglo(arr, df : pd.DataFrame, client, contador : int):
   Cont = contador
   updated_arr = [] #Nuevo contenedor [Normlamente retorna vacio]
+  print("NO HAY ORDENES")
   if(len(arr) != 0):
+    print("______________________________________________________________________________")
+    print("INICIO INFORME POR CUADRO TEMPORAL")
+    print(f"Cantidad de ordenes en el arreglo: {len(arr)}")
     for posicion in arr:
-      if(posicion.label != df['Polaridad'].iloc[-2] and posicion.is_profit(float(df['Close'].iloc[-1]))):
+      print(f"Orden: {posicion} | Esta en profit: {posicion.is_profit(float(df['Close'].iloc[-1]))} | Polaridad actual {df['Polaridad'].iloc[-2]}")
+      if(posicion.label != df['Polaridad'].iloc[-2] and posicion.is_profit(float(df['Close'].iloc[-1])) and posicion.time != df['Time'].iloc[-1]):
         res = posicion.close_order(client)
         Cont = EscribirRegistros(Cont,df,'Close', posicion.side, str(res))
       elif(posicion.side == 'Buy' and float(posicion.stoploss) >= df['Close'].iloc[-2]):
@@ -191,7 +196,8 @@ def Revisar_Arreglo(arr, df : pd.DataFrame, client, contador : int):
         Cont = EscribirRegistros(Cont,df,'Close', posicion.side, "Cerrada por Stoploss")
       else:
         updated_arr.append(posicion)
-        
+    print("##FIN REPORTE##")
+    print("______________________________________________________________________________")
   return updated_arr, Cont 
 '''
 ###################################################################################
@@ -243,7 +249,7 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int, cantidades
   symb_cont = 0 #Contador de symbolos (Determina cual stock observar)
   while(True):
     symb, symb_cont, cantidad = get_symb(symb_cont, symb_list, MAX_CURRENCY, cantidades_simetricas)
-    time.sleep(30)
+    time.sleep(60)
     df = get_data(symb, interval)
     df = CalculateSupertrend(df)
     posicion_list, Cont = Revisar_Arreglo(posicion_list, df, client, Cont)
@@ -254,9 +260,10 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int, cantidades
       if(df['Close'].iloc[-2] >= df['Supertrend'].iloc[-2] and df['Polaridad'].iloc[-2] == 1 and df['Polaridad'].iloc[-2] != df['Polaridad'].iloc[-3]):
         if(df['Close'].iloc[-2] >= df['DEMA800'].iloc[-2]):
           #cantidad = float(Get_Balance(client,'USDT'))*0.02
-          order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[-2],str(round(float(df['Supertrend'].iloc[-2]),4)), float(df['Close'].iloc[-1]))
+          order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[-2],str(round(float(df['Supertrend'].iloc[-2]),4)), float(df['Close'].iloc[-1]), str(df['Time'].iloc[-1]))
           res = order.make_order(client)
-          print(res)
+          print(f"Order Log: {res}")
+          print(order)
           Cont = EscribirRegistros(Cont, df,'Open',order.side,str(res))
           posicion_list.append(order)
           Polaridad_l[symb_cont] = df['Polaridad'].iloc[-2]
@@ -269,9 +276,10 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int, cantidades
       if(df['Close'].iloc[-2] <= df['Supertrend'].iloc[-2] and df['Polaridad'].iloc[-2] == -1 and df['Polaridad'].iloc[-2] != df['Polaridad'].iloc[-3]):
         if(df['Close'].iloc[-2] <= df['DEMA800'].iloc[-2]):
           #cantidad = float(Get_Balance(client,'USDT'))*0.02
-          order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[-2],str(round(float(df['Supertrend'].iloc[-1]),4)), float(df['Close'].iloc[-1]))
+          order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[-2],str(round(float(df['Supertrend'].iloc[-1]),4)), float(df['Close'].iloc[-1]), str(df['Time'].iloc[-1]))
           res = order.make_order(client)
-          print(res)
+          print(f"Order Log: {res}")
+          print(order)
           Cont = EscribirRegistros(Cont, df,'Open',order.side,str(res))
           posicion_list.append(order)
           Polaridad_l[symb_cont] = df['Polaridad'].iloc[-2]
