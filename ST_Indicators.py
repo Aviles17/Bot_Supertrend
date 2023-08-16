@@ -175,29 +175,34 @@ def EscribirRegistros(Contador : int, df : pd.DataFrame, tipo: str, side: str, m
 [Retorno]: Retorna el arreglo con las ordenes que no se ejecutaron y el contador actualizado
 ###################################################################################
 '''
-def Revisar_Arreglo(arr, df : pd.DataFrame, client, contador : int):
+def Revisar_Arreglo(arr, df : pd.DataFrame, client, contador : int, symb: str):
   Cont = contador
   updated_arr = [] #Nuevo contenedor [Normlamente retorna vacio]
-  print("NO HAY ORDENES")
   if(len(arr) != 0):
     print("______________________________________________________________________________")
-    print("INICIO INFORME POR CUADRO TEMPORAL")
+    print(f"INICIO INFORME POR CUADRO TEMPORAL DE {symb} a las {df['Time'].iloc[-1]}")
     print(f"Cantidad de ordenes en el arreglo: {len(arr)}")
     for posicion in arr:
-      print(f"Orden: {posicion} | Esta en profit: {posicion.is_profit(float(df['Close'].iloc[-1]))} | Polaridad actual {df['Polaridad'].iloc[-2]}")
-      if(posicion.label != df['Polaridad'].iloc[-2] and posicion.is_profit(float(df['Close'].iloc[-1])) and posicion.time != df['Time'].iloc[-1]):
-        res = posicion.close_order(client)
-        Cont = EscribirRegistros(Cont,df,'Close', posicion.side, str(res))
-      elif(posicion.side == 'Buy' and float(posicion.stoploss) >= df['Close'].iloc[-2]):
-        #Orden cierra auto
-        Cont = EscribirRegistros(Cont,df,'Close', posicion.side, "Cerrada por Stoploss")
-      elif(posicion.side == 'Sell' and float(posicion.stoploss) <= df['Close'].iloc[-2]):
-        #Orden cierra auto
-        Cont = EscribirRegistros(Cont,df,'Close', posicion.side, "Cerrada por Stoploss")
+      if(posicion.symbol == symb):
+        print(f"Orden: {posicion} | Esta en profit: {posicion.is_profit(float(df['Close'].iloc[-1]))} | Polaridad actual {df['Polaridad'].iloc[-2]}")
+        if(posicion.label != df['Polaridad'].iloc[-2] and posicion.is_profit(float(df['Close'].iloc[-1])) and posicion.time != df['Time'].iloc[-1]):
+          res = posicion.close_order(client)
+          Cont = EscribirRegistros(Cont,df,'Close', posicion.side, str(res))
+        elif(posicion.side == 'Buy' and float(posicion.stoploss) >= df['Close'].iloc[-2]):
+          #Orden cierra auto
+          Cont = EscribirRegistros(Cont,df,'Close', posicion.side, "Cerrada por Stoploss")
+        elif(posicion.side == 'Sell' and float(posicion.stoploss) <= df['Close'].iloc[-2]):
+          #Orden cierra auto
+          Cont = EscribirRegistros(Cont,df,'Close', posicion.side, "Cerrada por Stoploss")
+        else:
+          updated_arr.append(posicion)
       else:
         updated_arr.append(posicion)
+        print("El simbolo que se esta analizando no coincide con la posicion")
     print("##FIN REPORTE##")
     print("______________________________________________________________________________")
+  else:
+    print("NO HAY ORDENES")
   return updated_arr, Cont 
 '''
 ###################################################################################
@@ -252,7 +257,7 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int, cantidades
     time.sleep(60)
     df = get_data(symb, interval)
     df = CalculateSupertrend(df)
-    posicion_list, Cont = Revisar_Arreglo(posicion_list, df, client, Cont)
+    posicion_list, Cont = Revisar_Arreglo(posicion_list, df, client, Cont, symb)
     if(Polaridad_l[symb_cont] != df['Polaridad'].iloc[-2]):
       '''
       Caso 1 : Para compra long en futures
