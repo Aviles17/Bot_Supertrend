@@ -189,9 +189,11 @@ def Revisar_Arreglo(arr, df : pd.DataFrame, client, contador : int, symb: str):
           res = posicion.close_order(client)
           Cont = EscribirRegistros(Cont,df,'Close', posicion.side, str(res))
         elif(posicion.side == 'Buy' and float(posicion.stoploss) >= df['Close'].iloc[-2]):
+          #Caso Stoploss para ordenes Long
           #Orden cierra auto
           Cont = EscribirRegistros(Cont,df,'Close', posicion.side, "Cerrada por Stoploss")
         elif(posicion.side == 'Sell' and float(posicion.stoploss) <= df['Close'].iloc[-2]):
+          #Caso Stoploss para ordenes Short
           #Orden cierra auto
           Cont = EscribirRegistros(Cont,df,'Close', posicion.side, "Cerrada por Stoploss")
         else:
