@@ -112,6 +112,24 @@ class Posicion:
         else:
             print('La orden seleccionada no se ha creado correctamente')
             return None
+        
+    '''
+    def modificar_stoploss(client, order_id, nuevo_stoploss):
+    while(True):
+        try:
+            res = client.LinearOrder.LinearOrder_replace(
+                order_id = order_id,
+                stop_loss = nuevo_stoploss
+            ).result()
+            break
+        except OSError as e:
+            print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+            time.sleep(10)
+        except Exception as e:
+            print(f"Encountered error: {e}. Retrying in 10 seconds...\n")
+            time.sleep(10) 
+    return res
+    '''
             
             
         
