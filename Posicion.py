@@ -1,13 +1,18 @@
 import time
 class Posicion:
     #Constructor del Objeto
-    def __init__(self,side: str, symbol: str, amount: float, label: int, stoploss: str, price: float):
+    def __init__(self,side: str, symbol: str, amount: float, label: int, stoploss: str, price: float, order_time: str):
         self.side = side
         self.symbol = symbol
         self.amount = amount
         self.label = label
         self.stoploss = stoploss
         self.price = price
+        self.time = order_time
+    
+    def __str__(self):
+        return f"Posicion(side={self.side}, symbol={self.symbol}, amount={self.amount}, label={self.label}, stoploss={self.stoploss}, price={self.price}, time={self.time})"
+        
     
     def make_order(self, client):
         while(True):
@@ -25,7 +30,6 @@ class Posicion:
                     tp_trigger_by='LastPrice', 
                     sl_trigger_by='MarkPrice', 
                     price=None).result()
-                print(res)
                 break
             except OSError as e:
                 print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")

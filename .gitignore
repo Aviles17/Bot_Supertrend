@@ -11,3 +11,6 @@ Pruebas_1.py
 
 #Ignorar cache por seguridad
 __pycache__/
+
+#Ignorar Entorno
+BotEnv/
