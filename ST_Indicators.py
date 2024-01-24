@@ -163,6 +163,7 @@ def Revisar_Arreglo(arr, df : pd.DataFrame, client, symb: str):
     for posicion in arr:
       if(posicion.symbol == symb):
         print(f"Orden: {posicion} | Esta en profit: {posicion.is_profit(float(df['Close'].iloc[-1]))} | Polaridad actual {df['Polaridad'].iloc[-2]}")
+        #Caso donde ya la mitad se ha vendido y ya se ha subido el stoploss
         if(posicion.label != df['Polaridad'].iloc[-2] and posicion.is_profit(float(df['Close'].iloc[-1])) and posicion.time != df['Time'].iloc[-1]):
           res = posicion.close_order(client)
           EscribirRegistros(posicion,'Close', str(res), close_order_price= float(df['Close'].iloc[-1]))
@@ -175,9 +176,23 @@ def Revisar_Arreglo(arr, df : pd.DataFrame, client, symb: str):
           #Caso Stoploss para ordenes Short
           EscribirRegistros(posicion,'Close', "Cerrada por Stoploss", close_order_price= float(df['Close'].iloc[-1]))
         else:
-          updated_arr.append(posicion)
+          #Caso venta mitad de la posicion en profit 
+          if(posicion.half_order == False):
+            if(posicion.side == 'Buy' and posicion.half_price <= df['Close'].iloc[-1]):
+              #Caso venta mitad de la posicion Long
+              posicion.sell_half(client)
+              posicion.modificar_stoploss(client, posicion.id, str(df['Close'].iloc[-1]))
+              print("Se ha vendido la mitad de la posicion Long")
+              updated_arr.append(posicion)
+            elif(posicion.side == 'Sell' and posicion.half_price >= df['Close'].iloc[-1]):
+              #Caso venta mitad de la posicion Long
+              posicion.sell_half(client)
+              posicion.modificar_stoploss(client, posicion.id, str(df['Close'].iloc[-1]))
+              print("Se ha vendido la mitad de la posicion Long")
+              updated_arr.append(posicion)
+          else:
+            updated_arr.append(posicion)
       else:
-        updated_arr.append(posicion)
         print("El simbolo que se esta analizando no coincide con la posicion")
     print("##FIN REPORTE##")
     print("______________________________________________________________________________")
