@@ -141,7 +141,7 @@ class Posicion:
                     time.sleep(10)
                 except Exception as e:
                     print(f"Encountered error: {e}. Retrying in 10 seconds...\n")
-                    time.sleep(10) 
+                    time.sleep(10)
             self.half_order = True
             self.amount = half_amount
             return res
@@ -178,23 +178,29 @@ class Posicion:
             res = 'La orden seleccionada no se ha creado correctamente'
             return res
         
-    '''
-    def modificar_stoploss(client, order_id, nuevo_stoploss):
-    while(True):
-        try:
-            res = client.LinearOrder.LinearOrder_replace(
-                order_id = order_id,
-                stop_loss = nuevo_stoploss
-            ).result()
-            break
-        except OSError as e:
-            print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
-            time.sleep(10)
-        except Exception as e:
-            print(f"Encountered error: {e}. Retrying in 10 seconds...\n")
-            time.sleep(10) 
-    return res
-    '''
+    def modificar_stoploss(self, client, nuevo_stoploss):
+        while(True):
+            try:
+                '''
+                res = client.LinearOrder.LinearOrder_replace(
+                    order_id = order_id,
+                    stop_loss = nuevo_stoploss
+                ).result()
+                '''
+                res = client.LinearPositions.LinearPositions_tradingStop(
+                    symbol= self.symbol, 
+                    side=self.side,
+                    stop_loss=nuevo_stoploss
+                ).result()
+                break
+            except OSError as e:
+                print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+                time.sleep(10)
+            except Exception as e:
+                print(f"Encountered error: {e}. Retrying in 10 seconds...\n")
+                time.sleep(10) 
+        return res
+
             
             
         

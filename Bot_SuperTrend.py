@@ -3,7 +3,7 @@ import bybit
 import Credenciales as id
 
 COIN_SUPPORT = ['ETHUSDT','XRPUSDT'] #Monedas en las cuales se ejecutaran operaciones
-CANTIDADES = [0.01, 21]
+CANTIDADES = [0.02, 30]
 
 client = bybit.bybit(test=False, api_key= id.Api_Key, api_secret=id.Api_Secret)
 print('Login successful')
