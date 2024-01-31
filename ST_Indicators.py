@@ -109,39 +109,50 @@ def EscribirRegistros(order: Posicion, tipo: str, mensaje: str, close_order_pric
   #Si la operacion que se hizo fue abrir una posicion
   if(tipo == 'Open'):
     #Path para escribir los registros de apertura
-    PATH_OPEN = "./Aperturas"
+    PATH_OPEN = "Aperturas"
     # Verificar si el directorio existe
     if not os.path.exists(PATH_OPEN):
         os.makedirs(PATH_OPEN)
     #Escribir registros de un Close
     if(order.side == 'Buy'):
-      data = {"status": "Open", "symbol": order.symbol, "side": order.side, "close_price": order.price, "polaridad": order.label, "stoploss": order.stoploss ,"res_msg": mensaje }
-      with open(os.path.join(PATH_OPEN, str(datetime.now()) + "_LONG.json"), 'w') as file:
+      data = {"status": "Open", "symbol": order.symbol, "side": order.side, "close_price": order.price, "polaridad": str(order.label), "stoploss": order.stoploss ,"res_msg": mensaje }
+      with open(os.path.join(PATH_OPEN, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_LONG.json"), 'w') as file:
         json.dump(data, file)
       
     #Escribir registros de un Short  
     if(order.side == 'Sell'):
-      data = {"status": "Open", "symbol": order.symbol, "side": order.side, "close_price": order.price, "polaridad": order.label, "stoploss": order.stoploss ,"res_msg": mensaje }
-      with open(os.path.join(PATH_OPEN, str(datetime.now()) + "_SHORT.json"), 'w') as file:
+      data = {"status": "Open", "symbol": order.symbol, "side": order.side, "close_price": order.price, "polaridad": str(order.label), "stoploss": order.stoploss ,"res_msg": mensaje }
+      with open(os.path.join(PATH_OPEN, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_SHORT.json"), 'w') as file:
         json.dump(data, file)
     
   #Si la operacion que se hizo fue cerrar una posicion    
   elif(tipo == 'Close' and close_order_price != 0):
     #Path para escribir los registros de apertura
-    PATH_CLOSE = "./Cerradas"
+    PATH_CLOSE = "Cerradas"
     # Verificar si el directorio existe
     if not os.path.exists(PATH_CLOSE):
         os.makedirs(PATH_CLOSE)
-    if(order.side == 'Buy'):
-      data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": order.label, "P&L": (((close_order_price - order.price)/order.price)*100)*100 ,"res_msg": mensaje}
-      with open(os.path.join(PATH_CLOSE, str(datetime.now()) + "_LONG.json"), 'w') as file:
-        json.dump(data, file)
+    if order.half_order == False:
+      if(order.side == 'Buy'):
+        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*100) ,"res_msg": mensaje}
+        with open(os.path.join(PATH_CLOSE, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_LONG.json"), 'w') as file:
+          json.dump(data, file)
       
-    if(order.side == 'Sell'):
-      data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": order.label, "P&L": (((close_order_price - order.price)/order.price)*100)*-100 ,"res_msg": mensaje}
-      with open(os.path.join(PATH_CLOSE, str(datetime.now()) + "_LONG.json"), 'w') as file:
-        json.dump(data, file)
-    
+      if(order.side == 'Sell'):
+        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*-100) ,"res_msg": mensaje}
+        with open(os.path.join(PATH_CLOSE, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_SHORT.json"), 'w') as file:
+          json.dump(data, file)
+    else: #Caso de venta media posicion TO-DO: Añadir Reporte
+      if(order.side == 'Buy'):
+        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*100) ,"res_msg": mensaje}
+        with open(os.path.join(PATH_CLOSE, str(datetime.now()) + "_LONG.json"), 'w') as file:
+          json.dump(data, file)
+      
+      if(order.side == 'Sell'):
+        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*-100) ,"res_msg": mensaje}
+        with open(os.path.join(PATH_CLOSE, str(datetime.now()) + "_SHORT.json"), 'w') as file:
+          json.dump(data, file)
+      
   else:
     print("La solicitud es incorrecta")
   
@@ -188,7 +199,7 @@ def Revisar_Arreglo(arr, df : pd.DataFrame, client, symb: str):
               #Caso venta mitad de la posicion Long
               posicion.sell_half(client)
               posicion.modificar_stoploss(client, posicion.id, str(df['Close'].iloc[-1]))
-              print("Se ha vendido la mitad de la posicion Long")
+              print("Se ha vendido la mitad de la posicion Short")
               updated_arr.append(posicion)
           else:
             updated_arr.append(posicion)
