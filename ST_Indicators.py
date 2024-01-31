@@ -7,6 +7,7 @@ import numpy as np
 import pytz
 import os
 import json
+import psutil
 from datetime import datetime
 from Posicion import Posicion
 
@@ -259,6 +260,7 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int, cantidades
   Polaridad_l = [0] * (MAX_CURRENCY + 1) #Lista donde se van a guardar las polaridades respectivas de cada moneda
   symb_cont = 0 #Contador de symbolos (Determina cual stock observar)
   while(True):
+    print(f"CPU Usage: {psutil.cpu_percent(interval=1)}% | RAM Usage: {psutil.virtual_memory()[2]}% | Disk Usage: {psutil.disk_usage('/')[3]}%") 
     symb, symb_cont, cantidad = get_symb(symb_cont, symb_list, MAX_CURRENCY, cantidades_simetricas)
     time.sleep(60)
     df = get_data(symb, interval)
