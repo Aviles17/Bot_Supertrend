@@ -1,6 +1,6 @@
-import ST_Indicators
+import scripts.ST_Indicators as ST_Indicators
 import bybit
-import Credenciales as id
+import config.Credenciales as id
 
 COIN_SUPPORT = ['ETHUSDT','XRPUSDT'] #Monedas en las cuales se ejecutaran operaciones
 CANTIDADES = [0.02, 30]

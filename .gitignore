@@ -1,5 +1,3 @@
-#Ignorar el archivo de credenciales
-Credenciales.py
 #Ignorar archivos de prueba
 Pruebas_1.py
 
@@ -14,3 +12,12 @@ __pycache__/
 
 #Ignorar Entorno
 BotEnv/
+
+#Ignorar archivos de configuracion
+Credenciales.py
+
+#Ignorar archivos de logs
+*.log
+
+#Ignorar recibos de transacciones en data
+data/*

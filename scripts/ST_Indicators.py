@@ -8,7 +8,7 @@ import pytz
 import os
 import json
 from datetime import datetime
-from Posicion import Posicion
+from src.Posicion import Posicion
 
 
 '''
