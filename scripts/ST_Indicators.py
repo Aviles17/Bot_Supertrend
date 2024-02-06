@@ -7,6 +7,7 @@ import numpy as np
 import pytz
 import os
 import json
+import psutil
 from datetime import datetime
 from src.Posicion import Posicion
 
@@ -109,39 +110,50 @@ def EscribirRegistros(order: Posicion, tipo: str, mensaje: str, close_order_pric
   #Si la operacion que se hizo fue abrir una posicion
   if(tipo == 'Open'):
     #Path para escribir los registros de apertura
-    PATH_OPEN = "./Aperturas"
+    PATH_OPEN = "Aperturas"
     # Verificar si el directorio existe
     if not os.path.exists(PATH_OPEN):
         os.makedirs(PATH_OPEN)
     #Escribir registros de un Close
     if(order.side == 'Buy'):
-      data = {"status": "Open", "symbol": order.symbol, "side": order.side, "close_price": order.price, "polaridad": order.label, "stoploss": order.stoploss ,"res_msg": mensaje }
-      with open(os.path.join(PATH_OPEN, str(datetime.now()) + "_LONG.json"), 'w') as file:
+      data = {"status": "Open", "symbol": order.symbol, "side": order.side, "close_price": order.price, "polaridad": str(order.label), "stoploss": order.stoploss ,"res_msg": mensaje }
+      with open(os.path.join(PATH_OPEN, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_LONG.json"), 'w') as file:
         json.dump(data, file)
       
     #Escribir registros de un Short  
     if(order.side == 'Sell'):
-      data = {"status": "Open", "symbol": order.symbol, "side": order.side, "close_price": order.price, "polaridad": order.label, "stoploss": order.stoploss ,"res_msg": mensaje }
-      with open(os.path.join(PATH_OPEN, str(datetime.now()) + "_SHORT.json"), 'w') as file:
+      data = {"status": "Open", "symbol": order.symbol, "side": order.side, "close_price": order.price, "polaridad": str(order.label), "stoploss": order.stoploss ,"res_msg": mensaje }
+      with open(os.path.join(PATH_OPEN, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_SHORT.json"), 'w') as file:
         json.dump(data, file)
     
   #Si la operacion que se hizo fue cerrar una posicion    
   elif(tipo == 'Close' and close_order_price != 0):
     #Path para escribir los registros de apertura
-    PATH_CLOSE = "./Cerradas"
+    PATH_CLOSE = "Cerradas"
     # Verificar si el directorio existe
     if not os.path.exists(PATH_CLOSE):
         os.makedirs(PATH_CLOSE)
-    if(order.side == 'Buy'):
-      data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": order.label, "P&L": (((close_order_price - order.price)/order.price)*100)*100 ,"res_msg": mensaje}
-      with open(os.path.join(PATH_CLOSE, str(datetime.now()) + "_LONG.json"), 'w') as file:
-        json.dump(data, file)
+    if order.half_order == False:
+      if(order.side == 'Buy'):
+        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*100) ,"res_msg": mensaje}
+        with open(os.path.join(PATH_CLOSE, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_LONG.json"), 'w') as file:
+          json.dump(data, file)
       
-    if(order.side == 'Sell'):
-      data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": order.label, "P&L": (((close_order_price - order.price)/order.price)*100)*-100 ,"res_msg": mensaje}
-      with open(os.path.join(PATH_CLOSE, str(datetime.now()) + "_LONG.json"), 'w') as file:
-        json.dump(data, file)
-    
+      if(order.side == 'Sell'):
+        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*-100) ,"res_msg": mensaje}
+        with open(os.path.join(PATH_CLOSE, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_SHORT.json"), 'w') as file:
+          json.dump(data, file)
+    else: #Caso de venta media posicion TO-DO: Añadir Reporte
+      if(order.side == 'Buy'):
+        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*100) ,"res_msg": mensaje}
+        with open(os.path.join(PATH_CLOSE, str(datetime.now()) + "_LONG.json"), 'w') as file:
+          json.dump(data, file)
+      
+      if(order.side == 'Sell'):
+        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*-100) ,"res_msg": mensaje}
+        with open(os.path.join(PATH_CLOSE, str(datetime.now()) + "_SHORT.json"), 'w') as file:
+          json.dump(data, file)
+      
   else:
     print("La solicitud es incorrecta")
   
@@ -188,7 +200,7 @@ def Revisar_Arreglo(arr, df : pd.DataFrame, client, symb: str):
               #Caso venta mitad de la posicion Long
               posicion.sell_half(client)
               posicion.modificar_stoploss(client, posicion.id, str(df['Close'].iloc[-1]))
-              print("Se ha vendido la mitad de la posicion Long")
+              print("Se ha vendido la mitad de la posicion Short")
               updated_arr.append(posicion)
           else:
             updated_arr.append(posicion)
@@ -248,6 +260,7 @@ def Trading(symb_list: list, interval: str,client, MAX_CURRENCY: int, cantidades
   Polaridad_l = [0] * (MAX_CURRENCY + 1) #Lista donde se van a guardar las polaridades respectivas de cada moneda
   symb_cont = 0 #Contador de symbolos (Determina cual stock observar)
   while(True):
+    print(f"CPU Usage: {psutil.cpu_percent(interval=1)}% | RAM Usage: {psutil.virtual_memory()[2]}% | Disk Usage: {psutil.disk_usage('/')[3]}%") 
     symb, symb_cont, cantidad = get_symb(symb_cont, symb_list, MAX_CURRENCY, cantidades_simetricas)
     time.sleep(60)
     df = get_data(symb, interval)

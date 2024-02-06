@@ -3,13 +3,11 @@ Pruebas_1.py
 
 #Ignorar archivos que no son necesarios para la ejecucion
 *.zip
-*.txt
 *.pyc
 *.csv
 
 #Ignorar cache por seguridad
 __pycache__/
-
 #Ignorar Entorno
 BotEnv/
 

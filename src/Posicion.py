@@ -181,12 +181,6 @@ class Posicion:
     def modificar_stoploss(self, client, nuevo_stoploss):
         while(True):
             try:
-                '''
-                res = client.LinearOrder.LinearOrder_replace(
-                    order_id = order_id,
-                    stop_loss = nuevo_stoploss
-                ).result()
-                '''
                 res = client.LinearPositions.LinearPositions_tradingStop(
                     symbol= self.symbol, 
                     side=self.side,
