@@ -19,3 +19,6 @@ Credenciales.py
 
 #Ignorar recibos de transacciones en data
 data/*
+
+#Ignore build project info files
+*.egg-info/
