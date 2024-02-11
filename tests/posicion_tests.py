@@ -6,12 +6,13 @@ from scripts.ST_Indicators import get_data
 from scripts.ST_Indicators import CalculateSupertrend
 import config.Credenciales as id
 
-class TestST_Indicators_Util(unittest.TestCase):
+class TestPosicions(unittest.TestCase):
     
     def setUp(self):
         df = get_data('XRPUSDT', '15') #XRPUSDT fue seleccionado para la prueba debido a su bajo costo
         self.stock_df = CalculateSupertrend(df)
         self.client = bybit.bybit(test=False, api_key= id.Api_Key, api_secret=id.Api_Secret)
+        time.sleep(600)
         
         
     '''
@@ -28,7 +29,7 @@ class TestST_Indicators_Util(unittest.TestCase):
         
         res = order.make_order(self.client)
         self.assertEqual(res[0]['ret_msg'], 'OK')
-        time.sleep(60) #Espera 60 segundos para cerrar la orden
+        time.sleep(600) #Espera 60 segundos para cerrar la orden
         res = order.close_order(self.client)
         self.assertEqual(res[0]['ret_msg'], 'OK')
     
@@ -68,17 +69,17 @@ class TestST_Indicators_Util(unittest.TestCase):
         if self.stock_df["Polaridad"].iloc[-2] == 1:
             order = Posicion('Buy','XRPUSDT',30, self.stock_df["Polaridad"].iloc[-2],str(round(float(self.stock_df['Supertrend'].iloc[-2]),4)),float(self.stock_df['Close'].iloc[-2]), str(self.stock_df['Time'].iloc[-2]))
             order.make_order(self.client)
-            time.sleep(60) #Espera 60 segundos para vender la mitad
+            time.sleep(600) #Espera 60 segundos para vender la mitad
             res = order.sell_half(self.client)
             self.assertEqual(res[0]['ret_msg'], 'OK')
         elif self.stock_df["Polaridad"].iloc[-2] == -1:
             order = Posicion('Sell','XRPUSDT',30, self.stock_df["Polaridad"].iloc[-2],str(round(float(self.stock_df['Supertrend'].iloc[-2]),4)),float(self.stock_df['Close'].iloc[-2]), str(self.stock_df['Time'].iloc[-2]))
             order.make_order(self.client)
-            time.sleep(60) #Espera 60 segundos para vender la mitad
+            time.sleep(600) #Espera 60 segundos para vender la mitad
             res = order.sell_half(self.client)
             self.assertEqual(res[0]['ret_msg'], 'OK')
             
-        time.sleep(60) #Espera 60 segundos para cerrar la orden
+        time.sleep(600) #Espera 60 segundos para cerrar la orden
         res = order.close_order(self.client)
         self.assertEqual(res[0]['ret_msg'], 'OK')
         
@@ -94,16 +95,16 @@ class TestST_Indicators_Util(unittest.TestCase):
         if self.stock_df["Polaridad"].iloc[-2] == 1:
             order = Posicion('Buy','XRPUSDT',30, self.stock_df["Polaridad"].iloc[-2],str(round(float(self.stock_df['Supertrend'].iloc[-2]),4)),float(self.stock_df['Close'].iloc[-2]), str(self.stock_df['Time'].iloc[-2]))
             order.make_order(self.client)
-            time.sleep(60) #Espera 60 segundos para vender la mitad
+            time.sleep(600) #Espera 60 segundos para vender la mitad
         elif self.stock_df["Polaridad"].iloc[-2] == -1:
             order = Posicion('Sell','XRPUSDT',30, self.stock_df["Polaridad"].iloc[-2],str(round(float(self.stock_df['Supertrend'].iloc[-2]),4)),float(self.stock_df['Close'].iloc[-2]), str(self.stock_df['Time'].iloc[-2]))
             order.make_order(self.client)
-            time.sleep(60) #Espera 60 segundos para vender la mitad
+            time.sleep(600) #Espera 60 segundos para vender la mitad
         new_stoploss = (order.price + float(order.stoploss))/2 # Se calcula el nuevo stoploss con el promedio
         
         res = order.modificar_stoploss(self.client, str(round(new_stoploss,4)))
         self.assertEqual(res[0]['ret_msg'], 'OK')
-        time.sleep(60)
+        time.sleep(600)
         res = order.close_order(self.client)
         self.assertEqual(res[0]['ret_msg'], 'OK')
 
