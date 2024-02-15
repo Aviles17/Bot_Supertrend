@@ -1,12 +1,22 @@
-
 import scripts.ST_Indicators as op
 import bybit
 import psutil
 import time
+import logging as log
+from  Label_Filter import LabelFilter
 import config.Credenciales as id
 
 COIN_SUPPORT = ['ETHUSDT','XRPUSDT'] #Monedas en las cuales se ejecutaran operaciones
 CANTIDADES = [0.02, 30]
+#Configure log file
+logger = log.getLogger(__name__)
+logger.addFilter(LabelFilter('TRADING'))
+log.basicConfig(
+    filename='logs/Trading.log',
+    level=log.INFO,
+    format='%(asctime)s - %(label)s - %(message)s',
+    datefmt='%d-%b-%y %H:%M:%S'
+)
 
 client = bybit.bybit(test=False, api_key= id.Api_Key, api_secret=id.Api_Secret)
 print('Login successful')

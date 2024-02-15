@@ -1,7 +1,9 @@
 import time
+import logging as log
 class Posicion:
     #Constructor del Objeto
     def __init__(self,side: str, symbol: str, amount: float, label: int, stoploss: str, price: float, order_time: str):
+        self.id = None
         self.side = side
         self.symbol = symbol
         self.amount = amount
@@ -34,71 +36,78 @@ class Posicion:
                     price=None).result()
                 break
             except OSError as e:
-                print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+                log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
                 time.sleep(10)
             except Exception as e:
-                print(f"Encountered error: {e}. Retrying in 10 seconds...\n")
+                log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
                 time.sleep(10) 
+        self.id = res[0]['result']['order_id']
+        log.info(f"Orden {res[0]['result']['order_id']} creada correctamente en BYBIT : {res}", extra={'label': 'TRADING'})
         return res
     
     def close_order(self, client):
         #En el caso de un Long
-        if(self.side == 'Buy'):
-            while(True):
-                try:
-                    res = client.LinearOrder.LinearOrder_new(
-                        side='Sell',  # Opposite side to close the position
-                        symbol = self.symbol,
-                        qty = self.amount,
-                        order_type='Market',
-                        time_in_force='GoodTillCancel',
-                        reduce_only=True,  # Set to True to indicate it's a closing order
-                        close_on_trigger=False,
-                        order_link_id=None,
-                        stop_loss=None,  # Remove stop loss if not needed
-                        tp_trigger_by='LastPrice',
-                        sl_trigger_by='MarkPrice',
-                        price=None
-                        ).result()
-                    break
-                except OSError as e:
-                    print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
-                    time.sleep(10)
-                except Exception as e:
-                    print(f"Encountered error: {e}. Retrying in 10 seconds...\n")
-                    time.sleep(10) 
-            return res
-        #En el caso de un Short
-        elif(self.side == 'Sell'):
-            while(True):
-                try:
-                    res = client.LinearOrder.LinearOrder_new(
-                        side='Buy',  # Opposite side to close the position
-                        symbol = self.symbol,
-                        qty = self.amount,
-                        order_type='Market',
-                        time_in_force='GoodTillCancel',
-                        reduce_only=True,  # Set to True to indicate it's a closing order
-                        close_on_trigger=False,
-                        order_link_id=None,
-                        stop_loss=None,  # Remove stop loss if not needed
-                        tp_trigger_by='LastPrice',
-                        sl_trigger_by='MarkPrice',
-                        price=None
-                        ).result()
-                    break
-                except OSError as e:
-                    print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
-                    time.sleep(10)
-                except Exception as e:
-                    print(f"Encountered error: {e}. Retrying in 10 seconds...\n")
-                    time.sleep(10)
-            return res
-        
+        if self.id != None:  
+            if(self.side == 'Buy'):
+                while(True):
+                    try:
+                        res = client.LinearOrder.LinearOrder_new(
+                            side='Sell',  # Opposite side to close the position
+                            symbol = self.symbol,
+                            qty = self.amount,
+                            order_type='Market',
+                            time_in_force='GoodTillCancel',
+                            reduce_only=True,  # Set to True to indicate it's a closing order
+                            close_on_trigger=False,
+                            order_link_id=None,
+                            stop_loss=None,  # Remove stop loss if not needed
+                            tp_trigger_by='LastPrice',
+                            sl_trigger_by='MarkPrice',
+                            price=None
+                            ).result()
+                        break
+                    except OSError as e:
+                        log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+                        time.sleep(10)
+                    except Exception as e:
+                        log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
+                        time.sleep(10) 
+                log.info(f"Orden {self.id} cerrada correctamente en BYBIT : {res}", extra={'label': 'TRADING'})
+                return res
+            #En el caso de un Short
+            elif(self.side == 'Sell'):
+                while(True):
+                    try:
+                        res = client.LinearOrder.LinearOrder_new(
+                            side='Buy',  # Opposite side to close the position
+                            symbol = self.symbol,
+                            qty = self.amount,
+                            order_type='Market',
+                            time_in_force='GoodTillCancel',
+                            reduce_only=True,  # Set to True to indicate it's a closing order
+                            close_on_trigger=False,
+                            order_link_id=None,
+                            stop_loss=None,  # Remove stop loss if not needed
+                            tp_trigger_by='LastPrice',
+                            sl_trigger_by='MarkPrice',
+                            price=None
+                            ).result()
+                        break
+                    except OSError as e:
+                        log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+                        time.sleep(10)
+                    except Exception as e:
+                        log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
+                        time.sleep(10)
+                log.info(f"Orden {self.id} cerrada correctamente en BYBIT : {res}", extra={'label': 'TRADING'})
+                return res
+            else:
+                log.error('La orden seleccionada no se ha creado correctamente [El lado de la orden no es valido]')
+                return None
         else:
-            res = 'La orden seleccionada no se ha creado correctamente'
-            return res
-            
+            log.error('La orden seleccionada no se ha creado correctamente [El ID de la orden no es valido]')
+            return None
+
     def is_profit(self, current_pice: float):
         
         if self.side == 'Buy':
@@ -112,71 +121,76 @@ class Posicion:
             else:
                 return False
         else:
-            print('La orden seleccionada no se ha creado correctamente')
+            log.error('La orden seleccionada no se ha creado correctamente [El lado de la orden no es valido]')
             return None
         
     def sell_half(self, client):
         half_amount = self.amount/2
-        #En el caso de un Long
-        if(self.side == 'Buy'):
-            while(True):
-                try:
-                    res = client.LinearOrder.LinearOrder_new(
-                        side='Sell',  # Opposite side to close the position
-                        symbol = self.symbol,
-                        qty = half_amount,
-                        order_type='Market',
-                        time_in_force='GoodTillCancel',
-                        reduce_only=True,  # Set to True to indicate it's a closing order
-                        close_on_trigger=False,
-                        order_link_id=None,
-                        stop_loss=None,  # Remove stop loss if not needed
-                        tp_trigger_by='LastPrice',
-                        sl_trigger_by='MarkPrice',
-                        price=None
-                        ).result()
-                    break
-                except OSError as e:
-                    print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
-                    time.sleep(10)
-                except Exception as e:
-                    print(f"Encountered error: {e}. Retrying in 10 seconds...\n")
-                    time.sleep(10)
-            self.half_order = True
-            self.amount = half_amount
-            return res
-        #En el caso de un Short
-        elif(self.side == 'Sell'):
-            while(True):
-                try:
-                    res = client.LinearOrder.LinearOrder_new(
-                        side='Buy',  # Opposite side to close the position
-                        symbol = self.symbol,
-                        qty = half_amount,
-                        order_type='Market',
-                        time_in_force='GoodTillCancel',
-                        reduce_only=True,  # Set to True to indicate it's a closing order
-                        close_on_trigger=False,
-                        order_link_id=None,
-                        stop_loss=None,  # Remove stop loss if not needed
-                        tp_trigger_by='LastPrice',
-                        sl_trigger_by='MarkPrice',
-                        price=None
-                        ).result()
-                    break
-                except OSError as e:
-                    print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
-                    time.sleep(10)
-                except Exception as e:
-                    print(f"Encountered error: {e}. Retrying in 10 seconds...\n")
-                    time.sleep(10)
-            self.half_order = True
-            self.amount = half_amount
-            return res
-        
+        if self.id != None and self.half_order == False:
+            #En el caso de un Long
+            if(self.side == 'Buy'):
+                while(True):
+                    try:
+                        res = client.LinearOrder.LinearOrder_new(
+                            side='Sell',  # Opposite side to close the position
+                            symbol = self.symbol,
+                            qty = half_amount,
+                            order_type='Market',
+                            time_in_force='GoodTillCancel',
+                            reduce_only=True,  # Set to True to indicate it's a closing order
+                            close_on_trigger=False,
+                            order_link_id=None,
+                            stop_loss=None,  # Remove stop loss if not needed
+                            tp_trigger_by='LastPrice',
+                            sl_trigger_by='MarkPrice',
+                            price=None
+                            ).result()
+                        break
+                    except OSError as e:
+                        log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+                        time.sleep(10)
+                    except Exception as e:
+                        log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
+                        time.sleep(10)
+                self.half_order = True
+                self.amount = half_amount
+                log.info(f"Orden {self.id} cerrada a la mitad correctamente en BYBIT : {res}", extra={'label': 'TRADING'})
+                return res
+            #En el caso de un Short
+            elif(self.side == 'Sell'):
+                while(True):
+                    try:
+                        res = client.LinearOrder.LinearOrder_new(
+                            side='Buy',  # Opposite side to close the position
+                            symbol = self.symbol,
+                            qty = half_amount,
+                            order_type='Market',
+                            time_in_force='GoodTillCancel',
+                            reduce_only=True,  # Set to True to indicate it's a closing order
+                            close_on_trigger=False,
+                            order_link_id=None,
+                            stop_loss=None,  # Remove stop loss if not needed
+                            tp_trigger_by='LastPrice',
+                            sl_trigger_by='MarkPrice',
+                            price=None
+                            ).result()
+                        break
+                    except OSError as e:
+                        log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+                        time.sleep(10)
+                    except Exception as e:
+                        log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
+                        time.sleep(10)
+                self.half_order = True
+                self.amount = half_amount
+                log.info(f"Orden {self.id} cerrada a la mitad correctamente en BYBIT : {res}", extra={'label': 'TRADING'})
+                return res
+            else:
+                log.error('La orden seleccionada no se ha creado correctamente [El lado de la orden no es valido]')
+                return None
         else:
-            res = 'La orden seleccionada no se ha creado correctamente'
-            return res
+            log.error('La orden seleccionada no se ha creado correctamente [El ID de la orden no es valido]')
+            return None
         
     def modificar_stoploss(self, client, nuevo_stoploss):
         while(True):
@@ -188,17 +202,10 @@ class Posicion:
                 ).result()
                 break
             except OSError as e:
-                print(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+                log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
                 time.sleep(10)
             except Exception as e:
-                print(f"Encountered error: {e}. Retrying in 10 seconds...\n")
+                log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
                 time.sleep(10) 
+        log.info(f"Stoploss de la orden {self.id} modificado correctamente en BYBIT : {res}", extra={'label': 'TRADING'})
         return res
-
-            
-            
-        
-            
-            
-    
-        
