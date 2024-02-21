@@ -5,6 +5,7 @@ import time
 import pandas_ta as ta 
 import pytz
 import os
+import logging as log
 import json
 from datetime import datetime
 from src.Posicion import Posicion
@@ -53,10 +54,10 @@ def get_data(symbol: str,interval: str,unixtimeinterval: int = 1800000):
         data = requests.get(url).json()
         break
       except requests.exceptions.ConnectionError as e:
-        print(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
+        log.error(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
         time.sleep(10)
       except requests.RequestException as e:
-        print(f"Error occurred: {e}, Retrying in 10 seconds...\n")
+        log.error(f"Error occurred: {e}, Retrying in 10 seconds...\n")
         time.sleep(10)
     df = pd.DataFrame(data['result'])
     df = df.drop_duplicates()
@@ -144,7 +145,7 @@ def EscribirRegistros(order: Posicion, tipo: str, mensaje: str, close_order_pric
     #Caso de venta media posicion TO-DO: Añadir Reporte
       
   else:
-    print("La solicitud es incorrecta")
+    log.error("La solicitud es incorrecta, el tipo de orden no existe")
   
 '''
 ###################################################################################
@@ -158,48 +159,34 @@ def EscribirRegistros(order: Posicion, tipo: str, mensaje: str, close_order_pric
 '''
 def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
   updated_arr = [] #Nuevo contenedor [Normlamente retorna vacio]
-  if(len(arr) != 0):
-    print("______________________________________________________________________________")
-    print(f"INICIO INFORME POR CUADRO TEMPORAL DE {symb} a las {df['Time'].iloc[-1]}")
-    print(f"Cantidad de ordenes en el arreglo: {len(arr)}")
-    for posicion in arr:
-      if(posicion.symbol == symb):
-        print(f"Orden: {posicion} | Esta en profit: {posicion.is_profit(float(df['Close'].iloc[-1]))} | Polaridad actual {df['Polaridad'].iloc[-2]}")
-        #Caso donde ya la mitad se ha vendido y ya se ha subido el stoploss
+  if(len(arr) != 0): #Si el arreglo contiene alguna orden
+    for posicion in arr: #Iterar por cada una de las ordenes 
+      if(posicion.symbol == symb): #Si la orden es de la moneda que se esta analizando
+        
+        #Revision normal de las condiciones de venta (Profit, polaridad distinta y tiempo distinto al de la orden)
         if(posicion.label != df['Polaridad'].iloc[-2] and posicion.is_profit(float(df['Close'].iloc[-1])) and posicion.time != df['Time'].iloc[-1]):
+          
           res = posicion.close_order(client)
-          EscribirRegistros(posicion,'Close', str(res), close_order_price= float(df['Close'].iloc[-1]))
-          
-        elif(posicion.side == 'Buy' and float(posicion.stoploss) >= df['Close'].iloc[-2]):
-          #Caso Stoploss para ordenes Long
-          EscribirRegistros(posicion,'Close', "Cerrada por Stoploss", close_order_price= float(df['Close'].iloc[-1]))
-          
-        elif(posicion.side == 'Sell' and float(posicion.stoploss) <= df['Close'].iloc[-2]):
-          #Caso Stoploss para ordenes Short
-          EscribirRegistros(posicion,'Close', "Cerrada por Stoploss", close_order_price= float(df['Close'].iloc[-1]))
+          if res[0]['ret_msg'] == 'OK':
+            EscribirRegistros(posicion,'Close', str(res), close_order_price= float(df['Close'].iloc[-1]))
+          else:
+            log.error(f"Error al cerrar la orden: {res}")
         else:
           #Caso venta mitad de la posicion en profit 
           if(posicion.half_order == False):
             if(posicion.side == 'Buy' and posicion.half_price <= df['Close'].iloc[-1]):
               #Caso venta mitad de la posicion Long
               posicion.sell_half(client)
-              posicion.modificar_stoploss(client, posicion.id, str(df['Close'].iloc[-1]))
-              print("Se ha vendido la mitad de la posicion Long")
+              posicion.modificar_stoploss(client, posicion.id, posicion.half_price)
               updated_arr.append(posicion)
+              
             elif(posicion.side == 'Sell' and posicion.half_price >= df['Close'].iloc[-1]):
               #Caso venta mitad de la posicion Long
               posicion.sell_half(client)
-              posicion.modificar_stoploss(client, posicion.id, str(df['Close'].iloc[-1]))
-              print("Se ha vendido la mitad de la posicion Short")
+              posicion.modificar_stoploss(client, posicion.id, posicion.half_price)
               updated_arr.append(posicion)
           else:
             updated_arr.append(posicion)
-      else:
-        print("El simbolo que se esta analizando no coincide con la posicion")
-    print("##FIN REPORTE##")
-    print("______________________________________________________________________________")
-  else:
-    print("NO HAY ORDENES")
   return updated_arr
 '''
 ###################################################################################
@@ -283,11 +270,11 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
         posicion_list.append(order)
         Polaridad_l[symb_cont] = df['Polaridad'].iloc[-2]
         return posicion_list, Polaridad_l, symb_cont
-      '''
-      Caso 3 : Ninguna compra, actualizar polaridad si es que cambia
-      '''
-      Polaridad_l[symb_cont] = Polaridad_Manage(Polaridad_l[symb_cont], df)
-      return posicion_list, Polaridad_l, symb_cont
+    '''
+    Caso 3 : Ninguna compra, actualizar polaridad si es que cambia
+    '''
+    Polaridad_l[symb_cont] = Polaridad_Manage(Polaridad_l[symb_cont], df)
+    return posicion_list, Polaridad_l, symb_cont
       
           
       

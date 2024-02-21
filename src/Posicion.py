@@ -15,7 +15,7 @@ class Posicion:
         self.half_order = False
     
     def __str__(self):
-        return f"Posicion(side={self.side}, symbol={self.symbol}, amount={self.amount}, label={self.label}, stoploss={self.stoploss}, price={self.price}, time={self.time})"
+        return f"Posicion(id={self.id}, side={self.side}, symbol={self.symbol}, amount={self.amount}, label={self.label}, stoploss={self.stoploss}, price={self.price}, time={self.time}, half_price={self.half_price}, half_order_made={self.half_order})"
         
     
     def make_order(self, client):
@@ -42,7 +42,7 @@ class Posicion:
                 log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
                 time.sleep(10) 
         self.id = res[0]['result']['order_id']
-        log.info(f"Orden {res[0]['result']['order_id']} creada correctamente en BYBIT : {res}", extra={'label': 'TRADING'})
+        log.info(f"Orden {res[0]['result']['order_id']} creada correctamente en BYBIT : {res}")
         return res
     
     def close_order(self, client):
@@ -72,7 +72,7 @@ class Posicion:
                     except Exception as e:
                         log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
                         time.sleep(10) 
-                log.info(f"Orden {self.id} cerrada correctamente en BYBIT : {res}", extra={'label': 'TRADING'})
+                log.info(f"Orden {self.id} cerrada correctamente en BYBIT : {res}")
                 return res
             #En el caso de un Short
             elif(self.side == 'Sell'):
@@ -99,7 +99,7 @@ class Posicion:
                     except Exception as e:
                         log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
                         time.sleep(10)
-                log.info(f"Orden {self.id} cerrada correctamente en BYBIT : {res}", extra={'label': 'TRADING'})
+                log.info(f"Orden {self.id} cerrada correctamente en BYBIT : {res}")
                 return res
             else:
                 log.error('La orden seleccionada no se ha creado correctamente [El lado de la orden no es valido]')
@@ -154,7 +154,7 @@ class Posicion:
                         time.sleep(10)
                 self.half_order = True
                 self.amount = half_amount
-                log.info(f"Orden {self.id} cerrada a la mitad correctamente en BYBIT : {res}", extra={'label': 'TRADING'})
+                log.info(f"Orden {self.id} cerrada a la mitad correctamente en BYBIT : {res}")
                 return res
             #En el caso de un Short
             elif(self.side == 'Sell'):
@@ -183,7 +183,7 @@ class Posicion:
                         time.sleep(10)
                 self.half_order = True
                 self.amount = half_amount
-                log.info(f"Orden {self.id} cerrada a la mitad correctamente en BYBIT : {res}", extra={'label': 'TRADING'})
+                log.info(f"Orden {self.id} cerrada a la mitad correctamente en BYBIT : {res}")
                 return res
             else:
                 log.error('La orden seleccionada no se ha creado correctamente [El lado de la orden no es valido]')
@@ -207,5 +207,5 @@ class Posicion:
             except Exception as e:
                 log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
                 time.sleep(10) 
-        log.info(f"Stoploss de la orden {self.id} modificado correctamente en BYBIT : {res}", extra={'label': 'TRADING'})
+        log.info(f"Stoploss de la orden {self.id} modificado correctamente en BYBIT : {res}")
         return res
