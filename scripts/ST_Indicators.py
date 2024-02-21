@@ -275,7 +275,9 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
     '''
     Polaridad_l[symb_cont] = Polaridad_Manage(Polaridad_l[symb_cont], df)
     return posicion_list, Polaridad_l, symb_cont
-      
+  
+  else: #Si la polaridad no cambia
+    return posicion_list, Polaridad_l, symb_cont
           
       
     
