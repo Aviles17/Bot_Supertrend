@@ -165,7 +165,6 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
         
         #Revision normal de las condiciones de venta (Profit, polaridad distinta y tiempo distinto al de la orden)
         if(posicion.label != df['Polaridad'].iloc[-2] and posicion.is_profit(float(df['Close'].iloc[-1])) and posicion.time != df['Time'].iloc[-1]):
-          
           res = posicion.close_order(client)
           if res[0]['ret_msg'] == 'OK':
             EscribirRegistros(posicion,'Close', str(res), close_order_price= float(df['Close'].iloc[-1]))
@@ -185,8 +184,12 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
               posicion.sell_half(client)
               posicion.modificar_stoploss(client, posicion.id, posicion.half_price)
               updated_arr.append(posicion)
+            else:
+              updated_arr.append(posicion)
           else:
             updated_arr.append(posicion)
+      else:
+        updated_arr.append(posicion)
   return updated_arr
 '''
 ###################################################################################

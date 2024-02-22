@@ -14,7 +14,8 @@ def crear_reporte_ordenes(posicion_list: list):
             for i in range(len(posicion_list)):
                 f.write(f"Orden {i+1}: {str(posicion_list[i])}\n")
             f.close()
-        log.info('Reporte de ordenes creado y/o actualizado con exito')
+        log.info(f'Reporte de ordenes creado y/o actualizado con exito. Tamaño: {len(posicion_list)}')
+        print(f'REPORTE DE ORDENES CREADO Y/O ACTUALIZADO CON EXITO. TAMAÑO: {len(posicion_list)}')
     else:
         log.warning('No se han ejecutado ordenes')
         print(f'NO HAY ORDENES ({datetime.now()})')
