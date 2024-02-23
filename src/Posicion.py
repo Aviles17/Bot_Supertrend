@@ -124,6 +124,23 @@ class Posicion:
             log.error('La orden seleccionada no se ha creado correctamente [El lado de la orden no es valido]')
             return None
         
+        
+    def stop_loss_reached(self, current_pice: float):
+        if self.side == 'Buy':
+            if self.stoploss > current_pice:
+                return True
+            else:
+                return False
+        elif self.side == 'Sell':
+            if self.stoploss < current_pice:
+                return True
+            else:
+                return False
+        else:
+            log.error('La orden seleccionada no se ha creado correctamente [El lado de la orden no es valido]')
+            return None
+        
+        
     def sell_half(self, client):
         half_amount = self.amount/2
         if self.id != None and self.half_order == False:

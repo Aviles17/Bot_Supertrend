@@ -170,19 +170,24 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
             EscribirRegistros(posicion,'Close', str(res), close_order_price= float(df['Close'].iloc[-1]))
           else:
             log.error(f"Error al cerrar la orden: {res}")
+        
+        #Caso de venta de la orden por stoploss
+        elif posicion.stop_loss_reached(float(df['Close'].iloc[-1])):
+          log.info(f"Stoploss alcanzado para la orden: {posicion.id}|{posicion.symbol}|{posicion.side}|{posicion.price}")
+          
         else:
           #Caso venta mitad de la posicion en profit 
           if(posicion.half_order == False):
             if(posicion.side == 'Buy' and posicion.half_price <= df['Close'].iloc[-1]):
               #Caso venta mitad de la posicion Long
               posicion.sell_half(client)
-              posicion.modificar_stoploss(client, posicion.id, posicion.half_price)
+              posicion.modificar_stoploss(client, posicion.price)
               updated_arr.append(posicion)
               
             elif(posicion.side == 'Sell' and posicion.half_price >= df['Close'].iloc[-1]):
               #Caso venta mitad de la posicion Long
               posicion.sell_half(client)
-              posicion.modificar_stoploss(client, posicion.id, posicion.half_price)
+              posicion.modificar_stoploss(client, posicion.price)
               updated_arr.append(posicion)
             else:
               updated_arr.append(posicion)
