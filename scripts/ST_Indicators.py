@@ -178,13 +178,13 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
         else:
           #Caso venta mitad de la posicion en profit 
           if(posicion.half_order == False):
-            if(posicion.side == 'Buy' and posicion.half_price <= df['Close'].iloc[-1]):
+            if(posicion.side == 'Buy' and posicion.half_price <= df['High'].iloc[-1]):
               #Caso venta mitad de la posicion Long
               posicion.sell_half(client)
               posicion.modificar_stoploss(client, posicion.price)
               updated_arr.append(posicion)
               
-            elif(posicion.side == 'Sell' and posicion.half_price >= df['Close'].iloc[-1]):
+            elif(posicion.side == 'Sell' and posicion.half_price >= df['High'].iloc[-1]):
               #Caso venta mitad de la posicion Long
               posicion.sell_half(client)
               posicion.modificar_stoploss(client, posicion.price)
