@@ -127,12 +127,12 @@ class Posicion:
         
     def stop_loss_reached(self, current_pice: float):
         if self.side == 'Buy':
-            if self.stoploss > current_pice:
+            if float(self.stoploss) > current_pice:
                 return True
             else:
                 return False
         elif self.side == 'Sell':
-            if self.stoploss < current_pice:
+            if float(self.stoploss) < current_pice:
                 return True
             else:
                 return False
