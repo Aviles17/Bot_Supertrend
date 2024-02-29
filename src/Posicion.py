@@ -4,6 +4,7 @@ class Posicion:
     #Constructor del Objeto
     def __init__(self,side: str, symbol: str, amount: float, label: int, stoploss: str, price: float, order_time: str):
         self.id = None
+        self.position_idx = None
         self.side = side
         self.symbol = symbol
         self.amount = amount
@@ -19,21 +20,29 @@ class Posicion:
         
     
     def make_order(self, client):
+        if self.side == 'Buy':
+            self.position_idx = 1
+        elif self.side == 'Sell':
+            self.position_idx = 2
+        else:
+            log.error('La orden seleccionada no se ha creado correctamente [El lado de la orden no es valido]')
+            return None
         while(True):
             try:
-                res = client.LinearOrder.LinearOrder_new(
+                res = client.place_order(
+                    category = "linear",
+                    symbol = self.symbol,
                     side = self.side,
-                    symbol = self.symbol, 
-                    qty = self.amount, 
-                    order_type='Market', 
-                    time_in_force='GoodTillCancel', 
-                    reduce_only=False, 
-                    close_on_trigger=False, 
-                    order_link_id=None, 
-                    stop_loss= self.stoploss, 
-                    tp_trigger_by='LastPrice', 
-                    sl_trigger_by='MarkPrice', 
-                    price=None).result()
+                    orderType="Market",
+                    qty= self.amount,
+                    timeInForce='GoodTillCancel',
+                    reduceOnly=False,
+                    closeOnTrigger= False,
+                    stopLoss = self.stoploss,
+                    tpTriggerBy = 'LastPrice',
+                    slTriggerBy = 'MarkPrice',
+                    positionIdx = self.position_idx
+                )
                 break
             except OSError as e:
                 log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
@@ -41,8 +50,8 @@ class Posicion:
             except Exception as e:
                 log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
                 time.sleep(10) 
-        self.id = res[0]['result']['order_id']
-        log.info(f"Orden {res[0]['result']['order_id']} creada correctamente en BYBIT : {res}")
+        self.id = res['result']['orderId']
+        log.info(f"Orden {res['result']['orderId']} creada correctamente en BYBIT : {res}")
         return res
     
     def close_order(self, client):
@@ -51,20 +60,15 @@ class Posicion:
             if(self.side == 'Buy'):
                 while(True):
                     try:
-                        res = client.LinearOrder.LinearOrder_new(
-                            side='Sell',  # Opposite side to close the position
-                            symbol = self.symbol,
-                            qty = self.amount,
-                            order_type='Market',
-                            time_in_force='GoodTillCancel',
-                            reduce_only=True,  # Set to True to indicate it's a closing order
-                            close_on_trigger=False,
-                            order_link_id=None,
-                            stop_loss=None,  # Remove stop loss if not needed
-                            tp_trigger_by='LastPrice',
-                            sl_trigger_by='MarkPrice',
-                            price=None
-                            ).result()
+                        res =  client.place_order(
+                                category="linear",
+                                symbol=self.symbol,
+                                side="Sell",
+                                orderType="Market",
+                                qty=self.amount,
+                                reduceOnly=True,
+                                positionIdx = 1
+                            )
                         break
                     except OSError as e:
                         log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
@@ -78,20 +82,15 @@ class Posicion:
             elif(self.side == 'Sell'):
                 while(True):
                     try:
-                        res = client.LinearOrder.LinearOrder_new(
-                            side='Buy',  # Opposite side to close the position
-                            symbol = self.symbol,
-                            qty = self.amount,
-                            order_type='Market',
-                            time_in_force='GoodTillCancel',
-                            reduce_only=True,  # Set to True to indicate it's a closing order
-                            close_on_trigger=False,
-                            order_link_id=None,
-                            stop_loss=None,  # Remove stop loss if not needed
-                            tp_trigger_by='LastPrice',
-                            sl_trigger_by='MarkPrice',
-                            price=None
-                            ).result()
+                        res = client.place_order(
+                                category="linear",
+                                symbol=self.symbol,
+                                side="Buy",
+                                orderType="Market",
+                                qty=self.amount,
+                                reduceOnly=True,
+                                positionIdx = 2
+                            )
                         break
                     except OSError as e:
                         log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
@@ -148,20 +147,15 @@ class Posicion:
             if(self.side == 'Buy'):
                 while(True):
                     try:
-                        res = client.LinearOrder.LinearOrder_new(
-                            side='Sell',  # Opposite side to close the position
-                            symbol = self.symbol,
-                            qty = half_amount,
-                            order_type='Market',
-                            time_in_force='GoodTillCancel',
-                            reduce_only=True,  # Set to True to indicate it's a closing order
-                            close_on_trigger=False,
-                            order_link_id=None,
-                            stop_loss=None,  # Remove stop loss if not needed
-                            tp_trigger_by='LastPrice',
-                            sl_trigger_by='MarkPrice',
-                            price=None
-                            ).result()
+                        res =  client.place_order(
+                                category="linear",
+                                symbol=self.symbol,
+                                side="Sell",
+                                orderType="Market",
+                                qty=half_amount,
+                                reduceOnly=True,
+                                positionIdx = 1
+                            )
                         break
                     except OSError as e:
                         log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
@@ -177,20 +171,15 @@ class Posicion:
             elif(self.side == 'Sell'):
                 while(True):
                     try:
-                        res = client.LinearOrder.LinearOrder_new(
-                            side='Buy',  # Opposite side to close the position
-                            symbol = self.symbol,
-                            qty = half_amount,
-                            order_type='Market',
-                            time_in_force='GoodTillCancel',
-                            reduce_only=True,  # Set to True to indicate it's a closing order
-                            close_on_trigger=False,
-                            order_link_id=None,
-                            stop_loss=None,  # Remove stop loss if not needed
-                            tp_trigger_by='LastPrice',
-                            sl_trigger_by='MarkPrice',
-                            price=None
-                            ).result()
+                        res = client.place_order(
+                                category="linear",
+                                symbol=self.symbol,
+                                side="Buy",
+                                orderType="Market",
+                                qty=half_amount,
+                                reduceOnly=True,
+                                positionIdx = 2
+                            )
                         break
                     except OSError as e:
                         log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
@@ -212,11 +201,13 @@ class Posicion:
     def modificar_stoploss(self, client, nuevo_stoploss):
         while(True):
             try:
-                res = client.LinearPositions.LinearPositions_tradingStop(
+                res = client.set_trading_stop(
+                    category= "linear",
                     symbol= self.symbol, 
                     side=self.side,
-                    stop_loss=nuevo_stoploss
-                ).result()
+                    stopLoss=nuevo_stoploss,
+                    positionIdx=self.position_idx
+                )
                 break
             except OSError as e:
                 log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")

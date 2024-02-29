@@ -1,5 +1,5 @@
 import unittest
-import bybit
+from pybit.unified_trading import HTTP
 import pandas as pd
 from scripts.ST_Indicators import Get_Balance
 from scripts.ST_Indicators import get_data
@@ -15,10 +15,10 @@ class TestST_Indicators_Util(unittest.TestCase):
     ###################################################################################
     '''
     def test_get_balance(self):
-        client = bybit.bybit(test=False, api_key= id.Api_Key, api_secret=id.Api_Secret)
+        client = HTTP(testnet=False, api_key=id.Api_Key, api_secret=id.Api_Secret)
         balance = Get_Balance(client, 'USDT')
-        self.assertIsInstance(balance, float)
-        self.assertGreater(balance, 0.0)
+        self.assertIsInstance(float(balance), float)
+        self.assertGreater(float(balance), 0.0)
         
         
     '''

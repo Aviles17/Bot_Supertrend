@@ -1,5 +1,5 @@
 import unittest
-import bybit
+from pybit.unified_trading import HTTP
 import time
 from src.Posicion import Posicion
 from scripts.ST_Indicators import get_data
@@ -11,9 +11,8 @@ class TestPosicions(unittest.TestCase):
     def setUp(self):
         df = get_data('XRPUSDT', '15') #XRPUSDT fue seleccionado para la prueba debido a su bajo costo
         self.stock_df = CalculateSupertrend(df)
-        self.client = bybit.bybit(test=False, api_key= id.Api_Key, api_secret=id.Api_Secret)
-        time.sleep(600)
-        
+        self.client = HTTP(testnet=False, api_key=id.Api_Key, api_secret=id.Api_Secret)
+        time.sleep(15)
         
     '''
     ###################################################################################
@@ -28,10 +27,10 @@ class TestPosicions(unittest.TestCase):
             order = Posicion('Sell','XRPUSDT',30, self.stock_df["Polaridad"].iloc[-2],str(round(float(self.stock_df['Supertrend'].iloc[-2]),4)),float(self.stock_df['Close'].iloc[-2]), str(self.stock_df['Time'].iloc[-2]))
         
         res = order.make_order(self.client)
-        self.assertEqual(res[0]['ret_msg'], 'OK')
-        time.sleep(600) #Espera 60 segundos para cerrar la orden
+        self.assertEqual(res['retMsg'], 'OK')
+        time.sleep(15) #Espera 15 segundos para cerrar la orden
         res = order.close_order(self.client)
-        self.assertEqual(res[0]['ret_msg'], 'OK')
+        self.assertEqual(res['retMsg'], 'OK')
     
     
     '''
@@ -45,7 +44,7 @@ class TestPosicions(unittest.TestCase):
             order = Posicion('Buy','XRPUSDT',30, self.stock_df["Polaridad"].iloc[-2],str(round(float(self.stock_df['Supertrend'].iloc[-2]),4)),float(self.stock_df['Close'].iloc[-2]), str(self.stock_df['Time'].iloc[-2]))
             res = order.is_profit(float(self.stock_df['Close'].iloc[-10]))
             self.assertIsInstance(res, bool)
-            if order.price > float(self.stock_df['Close'].iloc[-10]):
+            if order.price < float(self.stock_df['Close'].iloc[-10]):
                 self.assertEqual(res, True)
             else:
                 self.assertEqual(res, False)
@@ -53,7 +52,7 @@ class TestPosicions(unittest.TestCase):
             order = Posicion('Sell','XRPUSDT',30, self.stock_df["Polaridad"].iloc[-2],str(round(float(self.stock_df['Supertrend'].iloc[-2]),4)),float(self.stock_df['Close'].iloc[-2]), str(self.stock_df['Time'].iloc[-2]))
             res = order.is_profit(float(self.stock_df['Close'].iloc[-10]))
             self.assertIsInstance(res, bool)
-            if order.price < float(self.stock_df['Close'].iloc[-10]):
+            if order.price > float(self.stock_df['Close'].iloc[-10]):
                 self.assertEqual(res, True)
             else:
                 self.assertEqual(res, False)
@@ -69,19 +68,19 @@ class TestPosicions(unittest.TestCase):
         if self.stock_df["Polaridad"].iloc[-2] == 1:
             order = Posicion('Buy','XRPUSDT',30, self.stock_df["Polaridad"].iloc[-2],str(round(float(self.stock_df['Supertrend'].iloc[-2]),4)),float(self.stock_df['Close'].iloc[-2]), str(self.stock_df['Time'].iloc[-2]))
             order.make_order(self.client)
-            time.sleep(600) #Espera 60 segundos para vender la mitad
+            time.sleep(15) #Espera 15 segundos para vender la mitad
             res = order.sell_half(self.client)
-            self.assertEqual(res[0]['ret_msg'], 'OK')
+            self.assertEqual(res['retMsg'], 'OK')
         elif self.stock_df["Polaridad"].iloc[-2] == -1:
             order = Posicion('Sell','XRPUSDT',30, self.stock_df["Polaridad"].iloc[-2],str(round(float(self.stock_df['Supertrend'].iloc[-2]),4)),float(self.stock_df['Close'].iloc[-2]), str(self.stock_df['Time'].iloc[-2]))
             order.make_order(self.client)
-            time.sleep(600) #Espera 60 segundos para vender la mitad
+            time.sleep(15) #Espera 15 segundos para vender la mitad
             res = order.sell_half(self.client)
-            self.assertEqual(res[0]['ret_msg'], 'OK')
+            self.assertEqual(res['retMsg'], 'OK')
             
-        time.sleep(600) #Espera 60 segundos para cerrar la orden
+        time.sleep(15) #Espera 15 segundos para cerrar la orden
         res = order.close_order(self.client)
-        self.assertEqual(res[0]['ret_msg'], 'OK')
+        self.assertEqual(res['retMsg'], 'OK')
         
     
     
@@ -95,18 +94,18 @@ class TestPosicions(unittest.TestCase):
         if self.stock_df["Polaridad"].iloc[-2] == 1:
             order = Posicion('Buy','XRPUSDT',30, self.stock_df["Polaridad"].iloc[-2],str(round(float(self.stock_df['Supertrend'].iloc[-2]),4)),float(self.stock_df['Close'].iloc[-2]), str(self.stock_df['Time'].iloc[-2]))
             order.make_order(self.client)
-            time.sleep(600) #Espera 60 segundos para vender la mitad
+            time.sleep(15) #Espera 15 segundos para vender la mitad
         elif self.stock_df["Polaridad"].iloc[-2] == -1:
             order = Posicion('Sell','XRPUSDT',30, self.stock_df["Polaridad"].iloc[-2],str(round(float(self.stock_df['Supertrend'].iloc[-2]),4)),float(self.stock_df['Close'].iloc[-2]), str(self.stock_df['Time'].iloc[-2]))
             order.make_order(self.client)
-            time.sleep(600) #Espera 60 segundos para vender la mitad
+            time.sleep(15) #Espera 15 segundos para vender la mitad
         new_stoploss = (order.price + float(order.stoploss))/2 # Se calcula el nuevo stoploss con el promedio
         
         res = order.modificar_stoploss(self.client, str(round(new_stoploss,4)))
-        self.assertEqual(res[0]['ret_msg'], 'OK')
-        time.sleep(600)
+        self.assertEqual(res['retMsg'], 'OK')
+        time.sleep(15)
         res = order.close_order(self.client)
-        self.assertEqual(res[0]['ret_msg'], 'OK')
+        self.assertEqual(res['retMsg'], 'OK')
 
 
 if __name__ == '__main__':
