@@ -72,6 +72,8 @@ def get_data(symbol: str,interval: str,unixtimeinterval: int = 1800000):
     
   concatenated_df = pd.concat([list_registers[0], list_registers[1], list_registers[2], list_registers[3], list_registers[4], list_registers[5], list_registers[6], list_registers[7], list_registers[8], list_registers[9]], axis=0)
   concatenated_df = concatenated_df.reset_index(drop=True)
+  float_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+  concatenated_df[float_columns] = concatenated_df[float_columns].astype(float)
   return concatenated_df
 
     
@@ -84,10 +86,11 @@ def get_data(symbol: str,interval: str,unixtimeinterval: int = 1800000):
 ###################################################################################
 '''
 def CalculateSupertrend(data: pd.DataFrame):
+  reversed_df = data.iloc[::-1]
   Temp_Trend = ta.supertrend(
-    high= data['High'], 
-    low = data['Low'], 
-    close = data['Close'], 
+    high= reversed_df['High'], 
+    low = reversed_df['Low'], 
+    close = reversed_df['Close'], 
     period=10, 
     multiplier=3)
   Temp_Trend = Temp_Trend.rename(columns={'SUPERT_7_3.0':'Supertrend','SUPERTd_7_3.0':'Polaridad','SUPERTl_7_3.0':'ST_Inferior','SUPERTs_7_3.0':'ST_Superior'})
