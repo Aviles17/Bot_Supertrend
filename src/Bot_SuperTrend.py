@@ -1,9 +1,9 @@
 import scripts.ST_Indicators as op
-import bybit
 import psutil
 import time
 import logging as log
 import sys
+from pybit.unified_trading import HTTP
 from datetime import datetime
 import config.Credenciales as id
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     log.basicConfig(filename='Trading.log', level=log.INFO, format= '%(levelname)s - %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', filemode='w')
 
     if id.Api_Key != '' and id.Api_Secret != '':
-        client = bybit.bybit(test=False, api_key= id.Api_Key, api_secret=id.Api_Secret)
+        client = HTTP(testnet=False, api_key=id.Api_Key, api_secret=id.Api_Secret)
         print('Login successful')
         MAX = len(COIN_SUPPORT) - 1
         posicion_list = [] #Lista que contendra las ordenes (Inicialmente vacia)
