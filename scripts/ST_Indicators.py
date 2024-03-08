@@ -96,7 +96,6 @@ def CalculateSupertrend(data: pd.DataFrame):
   Temp_Trend['DEMA800'] = ta.dema(reversed_df['Close'], length=800)
   Temp_Trend = Temp_Trend.rename(columns={'SUPERT_7_3.0':'Supertrend','SUPERTd_7_3.0':'Polaridad','SUPERTl_7_3.0':'ST_Inferior','SUPERTs_7_3.0':'ST_Superior'})
   df_merge = pd.merge(data,Temp_Trend,left_index=True, right_index=True)
-  #df_merge['DEMA800'] = ta.dema(df_merge['Close'], length=800)
   return df_merge
 
 '''
@@ -170,10 +169,10 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
       if(posicion.symbol == symb): #Si la orden es de la moneda que se esta analizando
         
         #Revision normal de las condiciones de venta (Profit, polaridad distinta y tiempo distinto al de la orden)
-        if(posicion.label != df['Polaridad'].iloc[2] and posicion.is_prpipofit(float(df['Close'].iloc[1])) and posicion.time != df['Time'].iloc[1]):
+        if(posicion.label != df['Polaridad'].iloc[1] and posicion.is_prpipofit(float(df['Close'].iloc[0])) and posicion.time != df['Time'].iloc[0]):
           res = posicion.close_order(client)
           if res[0]['ret_msg'] == 'OK':
-            EscribirRegistros(posicion,'Close', str(res), close_order_price= float(df['Close'].iloc[1]))
+            EscribirRegistros(posicion,'Close', str(res), close_order_price= float(df['Close'].iloc[0]))
           else:
             log.error(f"Error al cerrar la orden: {res}")
         
@@ -184,13 +183,13 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
         else:
           #Caso venta mitad de la posicion en profit 
           if(posicion.half_order == False):
-            if(posicion.side == 'Buy' and posicion.half_price <= df['High'].iloc[1]):
+            if(posicion.side == 'Buy' and posicion.half_price <= df['High'].iloc[0]):
               #Caso venta mitad de la posicion Long
               posicion.sell_half(client)
               posicion.modificar_stoploss(client, posicion.price)
               updated_arr.append(posicion)
               
-            elif(posicion.side == 'Sell' and posicion.half_price >= df['Low'].iloc[1]):
+            elif(posicion.side == 'Sell' and posicion.half_price >= df['Low'].iloc[0]):
               #Caso venta mitad de la posicion Long
               posicion.sell_half(client)
               posicion.modificar_stoploss(client, posicion.price)
@@ -213,11 +212,11 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
 def Polaridad_Manage(Polaridad: int, df: pd.DataFrame):
   if(Polaridad == 0):
     #return Polaridad
-    return df["Polaridad"].iloc[2]
-  elif(Polaridad != 0 and Polaridad != df["Polaridad"].iloc[2]):
-    Polaridad = df["Polaridad"].iloc[2]
+    return df["Polaridad"].iloc[1]
+  elif(Polaridad != 0 and Polaridad != df["Polaridad"].iloc[1]):
+    Polaridad = df["Polaridad"].iloc[1]
     return Polaridad
-  elif(Polaridad != 0 and Polaridad == df["Polaridad"].iloc[2]):
+  elif(Polaridad != 0 and Polaridad == df["Polaridad"].iloc[1]):
     return Polaridad
   
 '''
@@ -258,32 +257,31 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
   symb, symb_cont, cantidad = get_symb(symb_cont, symb_list, MAX_CURRENCY, cantidades_simetricas)
   df = get_data(symb, interval)
   df = CalculateSupertrend(df)
-  print(symb)
   posicion_list = Revisar_Arreglo(posicion_list, df, client, symb)
-  if(Polaridad_l[symb_cont] != df['Polaridad'].iloc[2]):
+  if(Polaridad_l[symb_cont] != df['Polaridad'].iloc[1]):
     '''
     Caso 1 : Para compra long en futures
     '''
-    if(df['Close'].iloc[2] >= df['Supertrend'].iloc[2] and df['Polaridad'].iloc[2] == 1 and df['Polaridad'].iloc[2] != df['Polaridad'].iloc[3]):
-      if(df['Close'].iloc[2] >= df['DEMA800'].iloc[2]):
+    if(df['Close'].iloc[1] >= df['Supertrend'].iloc[1] and df['Polaridad'].iloc[1] == 1 and df['Polaridad'].iloc[1] != df['Polaridad'].iloc[2]):
+      if(df['Close'].iloc[1] >= df['DEMA800'].iloc[1]):
         #cantidad = float(Get_Balance(client,'USDT'))*0.02
-        order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[2],str(round(float(df['Supertrend'].iloc[2]),4)), float(df['Close'].iloc[1]), str(df['Time'].iloc[1]))
+        order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]))
         res = order.make_order(client)
         EscribirRegistros(order,'Open', str(res))
         posicion_list.append(order)
-        Polaridad_l[symb_cont] = df['Polaridad'].iloc[2]
+        Polaridad_l[symb_cont] = df['Polaridad'].iloc[1]
         return posicion_list, Polaridad_l, symb_cont
     '''
     Caso 2 : Para compra shorts en futures
     '''
-    if(df['Close'].iloc[2] <= df['Supertrend'].iloc[2] and df['Polaridad'].iloc[2] == -1 and df['Polaridad'].iloc[2] != df['Polaridad'].iloc[3]):
-      if(df['Close'].iloc[2] <= df['DEMA800'].iloc[2]):
+    if(df['Close'].iloc[1] <= df['Supertrend'].iloc[1] and df['Polaridad'].iloc[1] == -1 and df['Polaridad'].iloc[1] != df['Polaridad'].iloc[2]):
+      if(df['Close'].iloc[1] <= df['DEMA800'].iloc[1]):
         #cantidad = float(Get_Balance(client,'USDT'))*0.02
-        order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[2],str(round(float(df['Supertrend'].iloc[1]),4)), float(df['Close'].iloc[1]), str(df['Time'].iloc[1]))
+        order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]))
         res = order.make_order(client)
         EscribirRegistros(order,'Open',str(res))
         posicion_list.append(order)
-        Polaridad_l[symb_cont] = df['Polaridad'].iloc[2]
+        Polaridad_l[symb_cont] = df['Polaridad'].iloc[1]
         return posicion_list, Polaridad_l, symb_cont
     '''
     Caso 3 : Ninguna compra, actualizar polaridad si es que cambia
