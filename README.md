@@ -1,45 +1,62 @@
-# Trading Bot y Plataforma de Gestión de Fondos en Criptomonedas
+# Chamba Trading Bot
 
-Este repositorio contiene el código fuente de un bot de trading de criptomonedas que utiliza diversos indicadores técnicos para optimizar las decisiones de trading. El objetivo principal es maximizar los beneficios y ofrecer una plataforma transparente y eficiente para la gestión de fondos.
+[![Build Status](https://img.shields.io/pypi/pyversions/pybit)](https://www.python.org/downloads/)
 
-## Características
+Bot de trading versátil que puede ser implementada en distintos instrumentos financieros.
+## Índice de Contenidos
 
-- **Trading basado en Indicadores:** El bot utiliza indicadores técnicos como Medias Móviles, RSI (Índice de Fuerza Relativa) y MACD (Convergencia y Divergencia de Medias Móviles) para tomar decisiones fundamentadas en el mercado.
+- [Intro](#intro)
+- [Características](#caracteristicas)
+- [Instalación](#instalacion)
+- [Uso](#uso)
+- [Hoja de Ruta](#ruta)
+- [Autores](#autores)
 
-- **Gestión de Riesgos:** Se implementan estrategias robustas de gestión de riesgos para minimizar posibles pérdidas.
 
-- **Backtesting:** Se utiliza data histórica para realizar pruebas retrospectivas y evaluar el rendimiento del bot bajo diferentes condiciones del mercado.
+## Intro
+Este proyecto es un Bot de Trading especializado para mercados volátiles. 
+Se puede utilizar en cualquier intervalos de tiempo, aunque se recomienda especialmente en velas de 15 minutos. 
+Utiliza una estrategia avanzada respaldada por dos indicadores principales: Supertrend y Double EMA.
 
-- **Plataforma de Gestión de Fondos:** Con la validación exitosa del bot, la intención es transformarlo en una plataforma donde individuos pueden invertir fondos para ser gestionados en operaciones de trading de criptomonedas.
+Solo funciona con el exchange **ByBit** debido al uso de librerias específicas para conectarse a su API.
 
-## Inicio Rápido
+## Caracteristicas
+- **Estrategia:** El bot emplea una estrategia que combina ambor indicadores para identificar oportunidades de compra y venta.
+- **Ganancias Dinámicas:** Incorpora un enfoque de ganancias dinámicas para maximizar los rendimientos.
+- **Take Profit y Stop Loss Dinámicos y Seguros:** El bot gestiona automáticamente el take profit y stop loss, ajustándolos dinámicamente para optimizar la rentabilidad y mitigar riesgos.
 
-Ajusta los archivos de configuración (`config.yaml`, `indicators_settings.json`, etc.) para personalizar el comportamiento del bot y los indicadores.
+## Instalacion
+Para instalar todas las bibliotecas necesarias para el proyecto necesitas utilizar Python 3.9 preferiblemente o Python 3.10. 
+
+Utilizando la herramienta `pip` se pueden instalar todas las dependencias del proyecto. 
+```
+cd Bot_Supertrend
+pip install -r requirements.txt
+```
 
 ## Uso
+1. Lo primero que se necesita hacer, es actualizar el archivo de credenciales para poder conectarse a tu API personal en el directorio ` config/Credenciales.py `:
+2. Lo siguiente es correr el archivo ` src/Bot_SuperTrend.py ` 
+**¡AVISO!**  Al correr este código, solo se negociará con las monedas **ETH** & **XRP** 
 
-1. Ejecuta el bot utilizando los scripts proporcionados.
+## Ruta
 
-2. Supervisa el rendimiento del bot a través de registros e indicadores en tiempo real.
+### Proximas Funcionalidades
 
-3. Explora oportunidades para expandirte en la gestión de fondos estableciendo una plataforma transparente y segura.
+1. **Medidores de Volumen y Volatilidad:** Mejorar la estrategia mediante la incorporación de medidores de volumen y volatilidad del mercado objetivo.
+2. **Optimización del Algoritmo:** Refinar la lógica del algoritmo de trading para adaptarse a diferentes condiciones del mercado.
+3. **Interfaz de Usuario Avanzada:** Diseñar una interfaz de usuario intuitiva para que los usuarios puedan personalizar la configuración y supervisar el rendimiento.
 
-## Hoja de Ruta
+## Autores
+<table>
+  <tr>
+<td align="center"><a href="https://github.com/Aviles17"><img src="https://avatars.githubusercontent.com/u/110882455?v=4" width="100px;" alt=""/><br /><sub><b>Santiago Avilés</b></sub></a><br /></td>
+<td align="center"><a href="https://github.com/SBoteroP"><img src="https://avatars.githubusercontent.com/u/68749776?s=400&u=985d505e9c62f2f7fa7d08a46e406a451995b5a4&v=4" width="100px;" alt=""/><br /><sub><b>Santiago Botero</b></sub></a><br /></td>
+  </tr>
+</table>
 
-- Implementar estrategias de trading más sofisticadas.
+## **Responsabilidad Financiera** 
+El uso de este bot implica riesgos financieros. No garantizamos beneficios y recomendamos a los usuarios comprender los riesgos y ajustar la configuración según sus preferencias y tolerancia al riesgo.
+Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para obtener más detalles. Es importante tener en cuenta que:
+**Nota:** Asegúrese de revisar y entender completamente el código antes de implementarlo en un entorno de trading real. No somos responsables de las pérdidas financieras derivadas del uso de este bot.
 
-- Desarrollar una interfaz de usuario amigable para la plataforma de gestión de fondos.
-
-- Establecer cumplimiento normativo y medidas de seguridad para la gestión de fondos externos.
-
-## Contribuciones
-
-Siéntete libre de contribuir abriendo problemas, enviando solicitudes de extracción o proporcionando comentarios.
-
-## Licencia
-
-Este proyecto está licenciado bajo la [Licencia MIT](LICENSE).
-
----
-
-**Descargo de responsabilidad:** El trading de criptomonedas conlleva riesgos, y el rendimiento pasado no garantiza resultados futuros. Este proyecto y cualquier actividad de gestión de fondos deben abordarse con precaución.
