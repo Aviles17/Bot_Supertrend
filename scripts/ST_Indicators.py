@@ -93,10 +93,39 @@ def CalculateSupertrend(data: pd.DataFrame):
     close = reversed_df['Close'], 
     period=10, 
     multiplier=3)
-  Temp_Trend['DEMA800'] = ta.dema(reversed_df['Close'], length=800)
+  # Calcular DEMA800
+  ema1 = ema(reversed_df['Close'], length=800)
+  ema2 = ema(ema1, length=800)
+  Temp_Trend['DEMA800'] = 2 * ema2 - ema1 
   Temp_Trend = Temp_Trend.rename(columns={'SUPERT_7_3.0':'Supertrend','SUPERTd_7_3.0':'Polaridad','SUPERTl_7_3.0':'ST_Inferior','SUPERTs_7_3.0':'ST_Superior'})
   df_merge = pd.merge(data,Temp_Trend,left_index=True, right_index=True)
   return df_merge
+
+
+'''
+###################################################################################
+[Proposito]: Funcion auxiliar para calcular el Exponential Moving Average (EMA) de una serie Pandas
+[Parametros]: source (pandas.Series que representa el precio de cierre o con lo que se calculara el EMA), 
+              length (La ventana de tiempo del EMA a calcular), 
+[Retorno]: Retorna serie de pandas con el EMA calculado
+###################################################################################
+'''
+def ema(source, length):     
+
+  #Calcular factor de suavisado (alpha)
+  alpha = 2 / (length + 1)
+  #Inicializar el EMA con el primer valor de la fuente
+  ema = source.iloc[0]      
+  #Calcular EMA para cada valor en la fuente
+  ema_values = []    
+  for value in source:         
+    ema = alpha * value + (1 - alpha) * ema         
+    ema_values.append(ema)
+  ema_values = ema_values
+  # Convertir lista a serie de pandas 
+  ema_series = pd.Series(ema_values)          
+  return ema_series
+
 
 '''
 ###################################################################################
