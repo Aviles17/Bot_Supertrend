@@ -206,7 +206,7 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
             log.error(f"Error al cerrar la orden: {res}")
         
         #Caso de venta de la orden por stoploss
-        elif posicion.stop_loss_reached(float(df['Close'].iloc[1])):
+        elif posicion.stop_loss_reached(float(df['High'].iloc[0]), float(df['Low'].iloc[0])):
           log.info(f"Stoploss alcanzado para la orden: {posicion.id}|{posicion.symbol}|{posicion.side}|{posicion.price}")
           
         else:
