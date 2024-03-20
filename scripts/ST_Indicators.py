@@ -200,13 +200,13 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
         #Revision normal de las condiciones de venta (Profit, polaridad distinta y tiempo distinto al de la orden)
         if(posicion.label != df['Polaridad'].iloc[1] and posicion.is_profit(float(df['Close'].iloc[0])) and posicion.time != df['Time'].iloc[0]):
           res = posicion.close_order(client)
-          if res[0]['ret_msg'] == 'OK':
+          if res['retMsg'] == 'OK':
             EscribirRegistros(posicion,'Close', str(res), close_order_price= float(df['Close'].iloc[0]))
           else:
             log.error(f"Error al cerrar la orden: {res}")
         
         #Caso de venta de la orden por stoploss
-        elif posicion.stop_loss_reached(float(df['Close'].iloc[1])):
+        elif posicion.stop_loss_reached(float(df['High'].iloc[0]), float(df['Low'].iloc[0])):
           log.info(f"Stoploss alcanzado para la orden: {posicion.id}|{posicion.symbol}|{posicion.side}|{posicion.price}")
           
         else:
