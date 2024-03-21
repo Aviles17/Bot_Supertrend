@@ -3,6 +3,9 @@ import psutil
 import time
 import logging as log
 import sys
+import json
+import math
+import requests
 from pybit.unified_trading import HTTP
 from datetime import datetime
 import config.Credenciales as id
@@ -21,8 +24,8 @@ def crear_reporte_ordenes(posicion_list: list):
         print(f'NO HAY ORDENES ({datetime.now()})')
 if __name__ == '__main__':
     
-    COIN_SUPPORT = ['ETHUSDT','XRPUSDT'] #Monedas en las cuales se ejecutaran operaciones
-    CANTIDADES = [0.02, 30] #Cantidades de monedas a comprar o vender
+    COIN_SUPPORT = ['XRPUSDT','ONEUSDT'] #Monedas en las cuales se ejecutaran operaciones
+    
     #Configure log file
     logger = log.getLogger(__name__)
     log.basicConfig(filename='Trading.log', level=log.INFO, format= '%(levelname)s - %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', filemode='w')
@@ -30,6 +33,8 @@ if __name__ == '__main__':
     if id.Api_Key != '' and id.Api_Secret != '':
         client = HTTP(testnet=False, api_key=id.Api_Key, api_secret=id.Api_Secret)
         print('Login successful')
+        qty_xrp,qty_one = op.calcular_qty_posicion(client)
+        CANTIDADES = [qty_xrp,qty_one] #Cantidades de monedas a comprar o vender
         MAX = len(COIN_SUPPORT) - 1
         posicion_list = [] #Lista que contendra las ordenes (Inicialmente vacia)
         Polaridad_l = [0] * len(COIN_SUPPORT)  #Lista donde se van a guardar las polaridades respectivas de cada moneda (Inicialmente [0,0])

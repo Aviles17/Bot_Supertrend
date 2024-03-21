@@ -17,8 +17,8 @@ class Posicion:
     
     def __str__(self):
         return f"Posicion(id={self.id}, side={self.side}, symbol={self.symbol}, amount={self.amount}, label={self.label}, stoploss={self.stoploss}, price={self.price}, time={self.time}, half_price={self.half_price}, half_order_made={self.half_order})"
-        
-    
+
+
     def make_order(self, client):
         if self.side == 'Buy':
             self.position_idx = 1

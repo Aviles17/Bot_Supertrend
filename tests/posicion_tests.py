@@ -4,6 +4,7 @@ import time
 from src.Posicion import Posicion
 from scripts.ST_Indicators import get_data
 from scripts.ST_Indicators import CalculateSupertrend
+import scripts.ST_Indicators as op
 import config.Credenciales as id
 
 class TestPosicions(unittest.TestCase):
@@ -12,7 +13,9 @@ class TestPosicions(unittest.TestCase):
         df = get_data('XRPUSDT', '15') #XRPUSDT fue seleccionado para la prueba debido a su bajo costo
         self.stock_df = CalculateSupertrend(df)
         self.client = HTTP(testnet=False, api_key=id.Api_Key, api_secret=id.Api_Secret)
+        self.qty_xrp,self.qty_one = op.calcular_qty_posicion(self.client)
         time.sleep(15)
+        
         
     '''
     ###################################################################################
@@ -22,9 +25,9 @@ class TestPosicions(unittest.TestCase):
     '''
     def test_make_close_order(self):
         if self.stock_df["Polaridad"].iloc[2] == 1:
-            order = Posicion('Buy','XRPUSDT',30, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
+            order = Posicion('Buy','XRPUSDT',self.qty_xrp, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
         elif self.stock_df["Polaridad"].iloc[2] == -1:
-            order = Posicion('Sell','XRPUSDT',30, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
+            order = Posicion('Sell','XRPUSDT',self.qty_xrp, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
         
         res = order.make_order(self.client)
         self.assertEqual(res['retMsg'], 'OK')
@@ -41,7 +44,7 @@ class TestPosicions(unittest.TestCase):
     '''
     def test_is_profit(self):
         if self.stock_df["Polaridad"].iloc[2] == 1:
-            order = Posicion('Buy','XRPUSDT',30, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
+            order = Posicion('Buy','XRPUSDT',self.qty_xrp, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
             res = order.is_profit(float(self.stock_df['Close'].iloc[10]))
             self.assertIsInstance(res, bool)
             if order.price < float(self.stock_df['Close'].iloc[10]):
@@ -49,7 +52,7 @@ class TestPosicions(unittest.TestCase):
             else:
                 self.assertEqual(res, False)
         elif self.stock_df["Polaridad"].iloc[2] == -1:
-            order = Posicion('Sell','XRPUSDT',30, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
+            order = Posicion('Sell','XRPUSDT',self.qty_xrp, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
             res = order.is_profit(float(self.stock_df['Close'].iloc[10]))
             self.assertIsInstance(res, bool)
             if order.price > float(self.stock_df['Close'].iloc[10]):
@@ -66,13 +69,13 @@ class TestPosicions(unittest.TestCase):
     '''
     def test_sell_half(self):
         if self.stock_df["Polaridad"].iloc[2] == 1:
-            order = Posicion('Buy','XRPUSDT',30, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
+            order = Posicion('Buy','XRPUSDT',self.qty_xrp, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
             order.make_order(self.client)
             time.sleep(15) #Espera 15 segundos para vender la mitad
             res = order.sell_half(self.client)
             self.assertEqual(res['retMsg'], 'OK')
         elif self.stock_df["Polaridad"].iloc[2] == -1:
-            order = Posicion('Sell','XRPUSDT',30, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
+            order = Posicion('Sell','XRPUSDT',self.qty_xrp, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
             order.make_order(self.client)
             time.sleep(15) #Espera 15 segundos para vender la mitad
             res = order.sell_half(self.client)
@@ -92,11 +95,11 @@ class TestPosicions(unittest.TestCase):
     '''
     def test_modificar_stoploss(self):
         if self.stock_df["Polaridad"].iloc[2] == 1:
-            order = Posicion('Buy','XRPUSDT',30, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
+            order = Posicion('Buy','XRPUSDT',self.qty_xrp, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
             order.make_order(self.client)
             time.sleep(15) #Espera 15 segundos para vender la mitad
         elif self.stock_df["Polaridad"].iloc[2] == -1:
-            order = Posicion('Sell','XRPUSDT',30, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
+            order = Posicion('Sell','XRPUSDT',self.qty_xrp, self.stock_df["Polaridad"].iloc[2],str(round(float(self.stock_df['Supertrend'].iloc[2]),4)),float(self.stock_df['Close'].iloc[2]), str(self.stock_df['Time'].iloc[2]))
             order.make_order(self.client)
             time.sleep(15) #Espera 15 segundos para vender la mitad
         new_stoploss = (order.price + float(order.stoploss))/2 # Se calcula el nuevo stoploss con el promedio
