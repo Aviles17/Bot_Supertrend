@@ -1,2 +1,2 @@
-Api_Key=""
-Api_Secret=""
+Api_Key = ""
+Api_Secret = ""

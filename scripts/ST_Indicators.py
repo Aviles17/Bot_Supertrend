@@ -3,6 +3,7 @@ import requests
 from datetime import datetime
 import time
 import pandas_ta as ta 
+import math
 import pytz
 import os
 import logging as log
@@ -11,6 +12,47 @@ from datetime import datetime
 from src.Posicion import Posicion
 
 
+'''
+###################################################################################
+[Proposito]: Función para calcular el tamaño de cada posición para cada uuna de las monedas.
+[Parámetros]: cliente (Informacion del cliente de bybit).
+[Retorna]: Retorna las cantidades de cada moneda que deben comprarse para seguir con nuestro modelo de 2% de riesgo.
+####################################################################################
+'''
+# Calcula la cantidad de la moneda que se va a comprar o vender cada vez
+def calcular_qty_posicion(cliente):
+    
+    # Llamado a la función para retornar el balance actual
+    wallet_balance = float(Get_Balance(cliente,"USDT"))
+    
+    # Retorna el precio de la moneda requerida
+    ticker_xrp = cliente.get_tickers(
+        testnet = False,
+        category = "linear",
+        symbol = "XRPUSDT",
+    )
+    mark_price_xrp = float(ticker_xrp['result']['list'][0]['markPrice'])   
+    ###
+    ticker_one = cliente.get_tickers(
+        testnet = False,
+        category = "linear",
+        symbol = "ONEUSDT",
+    )
+    mark_price_one = float(ticker_one['result']['list'][0]['markPrice'])   
+    
+    # Cantidades de aproximadamente el 2% y 5% de nuestro balance total en 'xrp' y 'one' respectivamente
+    qty_xrp = math.ceil((wallet_balance*0.02)/mark_price_xrp)
+    qty_one = math.ceil((wallet_balance*0.05)/mark_price_one)
+    
+    if(qty_xrp <= 1):
+        qty_xrp = 2*qty_xrp
+        
+    if(qty_one <= 1):
+        qty_one = 2*qty_one
+ 
+    return (qty_xrp, qty_one)
+
+    
 '''
 ###################################################################################
 [Proposito]: Funcion para limpiar la entrada de la informacion del cliente y proveer la informacion de cuenta
@@ -77,7 +119,7 @@ def get_data(symbol: str,interval: str,unixtimeinterval: int = 1800000):
   return concatenated_df
 
     
-
+ 
 '''
 ###################################################################################
 [Proposito]: Funcion para calcular las lineas que representan el SuperTrend superior e inferior, sus etiquetas e indicadores correspondientes
