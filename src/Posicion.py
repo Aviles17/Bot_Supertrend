@@ -1,5 +1,7 @@
 import time
 import logging as log
+import math
+
 class Posicion:
     #Constructor del Objeto
     def __init__(self,side: str, symbol: str, amount: float, label: int, stoploss: str, price: float, order_time: str):
@@ -141,7 +143,7 @@ class Posicion:
         
         
     def sell_half(self, client):
-        half_amount = self.amount/2
+        half_amount = math.ceil(self.amount/2)
         if self.id != None and self.half_order == False:
             #En el caso de un Long
             if(self.side == 'Buy'):
