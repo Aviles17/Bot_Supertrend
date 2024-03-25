@@ -40,9 +40,10 @@ def calcular_qty_posicion(cliente):
     )
     mark_price_one = float(ticker_one['result']['list'][0]['markPrice'])   
     
-    # Cantidades de aproximadamente el 2% y 5% de nuestro balance total en 'xrp' y 'one' respectivamente
-    qty_xrp = math.ceil((wallet_balance*0.02)/mark_price_xrp)
-    qty_one = math.ceil((wallet_balance*0.05)/mark_price_one)
+    # Cantidades de aproximadamente el 2% y 3% de nuestro balance total en 'xrp' y 'one' respectivamente
+    # 
+    qty_xrp = math.ceil(((wallet_balance*0.02)/mark_price_xrp)*69)
+    qty_one = math.ceil(((wallet_balance*0.03)/mark_price_one)*25)
     
     if(qty_xrp <= 1):
         qty_xrp = 2*qty_xrp
@@ -261,7 +262,7 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
               updated_arr.append(posicion)
               
             elif(posicion.side == 'Sell' and posicion.half_price >= df['Low'].iloc[0]):
-              #Caso venta mitad de la posicion Long
+              #Caso venta mitad de la posicion Sell
               posicion.sell_half(client)
               posicion.modificar_stoploss(client, posicion.price)
               updated_arr.append(posicion)
