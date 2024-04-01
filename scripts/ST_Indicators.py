@@ -95,20 +95,26 @@ def get_data(symbol: str,interval: str,unixtimeinterval: int = 1800000):
     while(True):
       try:
         data = requests.get(url).json()
-        break
+        log.info(f"Data request status: {data}")
+        if data["retMsg"] == "OK":
+          df = pd.DataFrame(data['result']["list"], columns=['Time','Open','High','Low','Close','Volume', 'Turnover'])
+          break
+        else:
+          raise Exception(f"Error general en la solicitud de datos {data}")
       except requests.exceptions.ConnectionError as e:
         log.error(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
         time.sleep(10)
       except requests.RequestException as e:
         log.error(f"Error occurred: {e}, Retrying in 10 seconds...\n")
         time.sleep(10)
-    df = pd.DataFrame(data['result']["list"], columns=['Time','Open','High','Low','Close','Volume', 'Turnover'])
+      except Exception as e:
+        log.error(f"Error occurred: {e}, Retrying in 10 seconds...\n")
+        time.sleep(10)
     df['Time'] = pd.to_numeric(df['Time'])
     df = df.drop_duplicates()
     df['Time'] = df['Time'].apply(lambda x: datetime.fromtimestamp(x / 1000, tz=pytz.UTC))
     target_timezone = pytz.timezone('Etc/GMT+5')
     df['Time'] = df['Time'].apply(lambda x: x.astimezone(target_timezone))
-    #df.rename(columns={'open':'Open','high':'High','low':'Low','close':'Close','volume':'Volume','open_time':'Time'}, inplace=True)
     df = df.drop(columns=['Turnover'])
     list_registers.append(df)
     unixtimeinterval = unixtimeinterval - DATA_200
@@ -120,7 +126,6 @@ def get_data(symbol: str,interval: str,unixtimeinterval: int = 1800000):
   return concatenated_df
 
     
- 
 '''
 ###################################################################################
 [Proposito]: Funcion para calcular las lineas que representan el SuperTrend superior e inferior, sus etiquetas e indicadores correspondientes
@@ -336,7 +341,6 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
     '''
     if(df['Close'].iloc[1] >= df['Supertrend'].iloc[1] and df['Polaridad'].iloc[1] == 1 and df['Polaridad'].iloc[1] != df['Polaridad'].iloc[2]):
       if(df['Close'].iloc[1] >= df['DEMA800'].iloc[1]):
-        #cantidad = float(Get_Balance(client,'USDT'))*0.02
         order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]))
         res = order.make_order(client)
         EscribirRegistros(order,'Open', str(res))
@@ -348,7 +352,6 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
     '''
     if(df['Close'].iloc[1] <= df['Supertrend'].iloc[1] and df['Polaridad'].iloc[1] == -1 and df['Polaridad'].iloc[1] != df['Polaridad'].iloc[2]):
       if(df['Close'].iloc[1] <= df['DEMA800'].iloc[1]):
-        #cantidad = float(Get_Balance(client,'USDT'))*0.02
         order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]))
         res = order.make_order(client)
         EscribirRegistros(order,'Open',str(res))
