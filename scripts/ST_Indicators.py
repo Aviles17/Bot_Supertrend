@@ -341,7 +341,6 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
     '''
     if(df['Close'].iloc[1] >= df['Supertrend'].iloc[1] and df['Polaridad'].iloc[1] == 1 and df['Polaridad'].iloc[1] != df['Polaridad'].iloc[2]):
       if(df['Close'].iloc[1] >= df['DEMA800'].iloc[1]):
-        #cantidad = float(Get_Balance(client,'USDT'))*0.02
         order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]))
         res = order.make_order(client)
         EscribirRegistros(order,'Open', str(res))
@@ -353,7 +352,6 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
     '''
     if(df['Close'].iloc[1] <= df['Supertrend'].iloc[1] and df['Polaridad'].iloc[1] == -1 and df['Polaridad'].iloc[1] != df['Polaridad'].iloc[2]):
       if(df['Close'].iloc[1] <= df['DEMA800'].iloc[1]):
-        #cantidad = float(Get_Balance(client,'USDT'))*0.02
         order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]))
         res = order.make_order(client)
         EscribirRegistros(order,'Open',str(res))
