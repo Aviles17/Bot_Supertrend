@@ -95,6 +95,7 @@ def get_data(symbol: str,interval: str,unixtimeinterval: int = 1800000):
     while(True):
       try:
         data = requests.get(url).json()
+        log.info(f"Data request status: {data['retMsg']}, data: {data["result"]}")
         if data["retMsg"] == "OK":
           df = pd.DataFrame(data['result']["list"], columns=['Time','Open','High','Low','Close','Volume', 'Turnover'])
           break
