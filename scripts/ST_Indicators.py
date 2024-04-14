@@ -95,7 +95,6 @@ def get_data(symbol: str,interval: str,unixtimeinterval: int = 1800000):
     while(True):
       try:
         data = requests.get(url).json()
-        log.info(f"Data request status: {data}")
         if data["retMsg"] == "OK":
           df = pd.DataFrame(data['result']["list"], columns=['Time','Open','High','Low','Close','Volume', 'Turnover'])
           break
@@ -225,7 +224,17 @@ def EscribirRegistros(order: Posicion, tipo: str, mensaje: str, close_order_pric
           json.dump(data, file)
           
     #Caso de venta media posicion TO-DO: Añadir Reporte
+    else:
+      if(order.side == 'Buy'):
+        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*100) ,"res_msg": mensaje}
+        with open(os.path.join(PATH_CLOSE, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_HALF_LONG.json"), 'w') as file:
+          json.dump(data, file)
       
+      if(order.side == 'Sell'):
+        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*-100) ,"res_msg": mensaje}
+        with open(os.path.join(PATH_CLOSE, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_HALF_SHORT.json"), 'w') as file:
+          json.dump(data, file)
+    
   else:
     log.error("La solicitud es incorrecta, el tipo de orden no existe")
   
@@ -245,17 +254,17 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
     for posicion in arr: #Iterar por cada una de las ordenes 
       if(posicion.symbol == symb): #Si la orden es de la moneda que se esta analizando
         
+        #Caso de venta de la orden por stoploss
+        if posicion.stop_loss_reached(float(df['High'].iloc[0]), float(df['Low'].iloc[0])):
+          log.info(f"Stoploss alcanzado para la orden: {posicion.id}|{posicion.symbol}|{posicion.side}|{posicion.price}")
+          
         #Revision normal de las condiciones de venta (Profit, polaridad distinta y tiempo distinto al de la orden)
-        if(posicion.label != df['Polaridad'].iloc[1] and posicion.is_profit(float(df['Close'].iloc[0])) and posicion.time != df['Time'].iloc[0]):
+        elif(posicion.label != df['Polaridad'].iloc[1] and posicion.is_profit(float(df['Close'].iloc[0])) and posicion.time != df['Time'].iloc[0]):
           res = posicion.close_order(client)
           if res['retMsg'] == 'OK':
             EscribirRegistros(posicion,'Close', str(res), close_order_price= float(df['Close'].iloc[0]))
           else:
             log.error(f"Error al cerrar la orden: {res}")
-        
-        #Caso de venta de la orden por stoploss
-        elif posicion.stop_loss_reached(float(df['High'].iloc[0]), float(df['Low'].iloc[0])):
-          log.info(f"Stoploss alcanzado para la orden: {posicion.id}|{posicion.symbol}|{posicion.side}|{posicion.price}")
           
         else:
           #Caso venta mitad de la posicion en profit 
@@ -336,35 +345,44 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
   df = CalculateSupertrend(df)
   posicion_list = Revisar_Arreglo(posicion_list, df, client, symb)
   if(Polaridad_l[symb_cont] != df['Polaridad'].iloc[1]):
+    log.info(f"La polaridad de {symb} guardada {Polaridad_l[symb_cont]} es diferenre  {df['Polaridad'].iloc[1]} [Primer Tier")
     '''
     Caso 1 : Para compra long en futures
     '''
     if(df['Close'].iloc[1] >= df['Supertrend'].iloc[1] and df['Polaridad'].iloc[1] == 1 and df['Polaridad'].iloc[1] != df['Polaridad'].iloc[2]):
+      log.info(f"El close del symbolo {symb} es mayor a la supertrend ({df['Close'].iloc[1]} > {df['Supertrend'].iloc[1]}), la polaridad es {df['Polaridad'].iloc[1]} y diferente a el anterior registro {df['Polaridad'].iloc[2]} [Segundo Tier]")
       if(df['Close'].iloc[1] >= df['DEMA800'].iloc[1]):
+        log.info(f"El valor del close del stock {symb} es mayor al DEMA800 ({df['Close'].iloc[1]} > {df['DEMA800'].iloc[1]})[Tercer Tier]")
         order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]))
         res = order.make_order(client)
         EscribirRegistros(order,'Open', str(res))
         posicion_list.append(order)
         Polaridad_l[symb_cont] = df['Polaridad'].iloc[1]
+        log.info(f"Orden de compra realizada con exito para {symb} [Cuarto Tier]")
         return posicion_list, Polaridad_l, symb_cont
     '''
     Caso 2 : Para compra shorts en futures
     '''
     if(df['Close'].iloc[1] <= df['Supertrend'].iloc[1] and df['Polaridad'].iloc[1] == -1 and df['Polaridad'].iloc[1] != df['Polaridad'].iloc[2]):
+      log.info(f"El close del symbolo {symb} es menor a la supertrend ({df['Close'].iloc[1]} < {df['Supertrend'].iloc[1]}), la polaridad es {df['Polaridad'].iloc[1]} y diferente a el anterior registro {df['Polaridad'].iloc[2]} [Segundo Tier]")
       if(df['Close'].iloc[1] <= df['DEMA800'].iloc[1]):
+        log.info(f"El valor del close del stock {symb} es menor al DEMA800 ({df['Close'].iloc[1]} < {df['DEMA800'].iloc[1]})[Tercer Tier]")
         order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]))
         res = order.make_order(client)
         EscribirRegistros(order,'Open',str(res))
         posicion_list.append(order)
         Polaridad_l[symb_cont] = df['Polaridad'].iloc[1]
+        log.info(f"Orden de compra realizada con exito para {symb} [Cuarto Tier]")
         return posicion_list, Polaridad_l, symb_cont
     '''
     Caso 3 : Ninguna compra, actualizar polaridad si es que cambia
     '''
+    log.info(f"La polaridad cambia pero no se ejecuta ninguna orden, actualización de variables [Tier 2.1]")
     Polaridad_l[symb_cont] = Polaridad_Manage(Polaridad_l[symb_cont], df)
     return posicion_list, Polaridad_l, symb_cont
   
   else: #Si la polaridad no cambia
+    log.info(f"La polaridad no cambia por lo que no se realizan ordenes o ninguna actualización [Tier 1.1]")
     return posicion_list, Polaridad_l, symb_cont
           
       
