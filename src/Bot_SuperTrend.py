@@ -42,6 +42,7 @@ if __name__ == '__main__':
         while(True):
             print(f"CPU Usage: {psutil.cpu_percent(interval=1)}% | RAM Usage: {psutil.virtual_memory()[2]}% | Disk Usage: {psutil.disk_usage('/')[3]}%")
             for i in range(len(COIN_SUPPORT)): 
+                log.info(f"Entro al bucle de monedas: {COIN_SUPPORT[i]}")
                 posicion_list, Polaridad_l, symb_cont = op.Trading_logic(client,COIN_SUPPORT,'15', MAX, CANTIDADES, Polaridad_l, posicion_list, symb_cont)
             crear_reporte_ordenes(posicion_list)
             time.sleep(30) #Espera 30 segundos por ciclo
