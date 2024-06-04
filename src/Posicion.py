@@ -55,6 +55,7 @@ class Posicion:
                 log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
                 time.sleep(10) 
         self.id = res['result']['orderId']
+        self.coordinate_order(client) #Coordinar información con API
         log.info(f"Orden {res['result']['orderId']} creada correctamente en BYBIT : {res} de {self.symbol}")
         return res
     
