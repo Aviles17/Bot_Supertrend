@@ -61,10 +61,12 @@ class Posicion:
                     retry = True
                     log.error(f"Se encontro un error inesperado accediendo a la informacion {e}. Reintentando en 10 segundos...\n")
                     time.sleep(10)
-                else:   
-                    log.error(f"Se encontro un error inesperado {e}.\n")
+                else:
+                    print(f"Error en make_order {e.with_traceback()}")   
+                    log.error(f"Se encontro un error inesperado despues del reintento: {e}.\n")
                     break
                     raise
+        time.sleep(15) #Esperar 15 segundos para que la acción se complete en el portal
         self.coordinate_order(client) #Coordinar información con API
         log.info(f"Orden {res['result']['orderId']} creada correctamente en BYBIT : {res} de {self.symbol}")
         return res
@@ -76,10 +78,10 @@ class Posicion:
                 try:
                     res = client.get_order_history(category="linear",orderId=self.id)['result']['list'][0]
                     if res['orderId'] == self.id:
-                        if res['avgPrice'] != self.price or res['stopLoss'] != self.stoploss:
+                        if res['avgPrice'] != self.price or float(res['stopLoss']) != self.stoploss:
                             #Revisar y actualizar datos de la posición con relación a la información live
                             if res['avgPrice'] != None:
-                                self.price = res['avgPrice']
+                                self.price = float(res['avgPrice'])
                                 log.info(f"La orden {self.id} se actualizo con relación al precio de Bybit correctamente a {self.price} antes de ser cargada a memoria")
                             if res['stopLoss'] != None:
                                 self.stoploss = res['stopLoss']
@@ -101,8 +103,14 @@ class Posicion:
                         retry = True
                         log.error(f"Se encontro un error inesperado accediendo a la informacion {e}. Reintentando en 10 segundos...\n")
                         time.sleep(10)
-                    else:   
-                        log.error(f"Se encontro un error inesperado {e}.\n")
+                    elif isinstance(e, IndexError) and retry == False:
+                        retry = True
+                        print(f"Error con reintento en coordinate {e.with_traceback()}") 
+                        log.error(f"Se encontro un error inesperado accediendo a la informacion {e}. Reintentando en 10 segundos...\n")
+                        time.sleep(10)
+                    else:
+                        print(f"Error en coordinate {e.with_traceback()}")      
+                        log.error(f"Se encontro un error inesperado despues del reintento: {e}.\n")
                         break
                         raise
         else:

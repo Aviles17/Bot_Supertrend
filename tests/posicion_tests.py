@@ -13,7 +13,7 @@ class TestPosicions(unittest.TestCase):
         df = get_data('XRPUSDT', '15') #XRPUSDT fue seleccionado para la prueba debido a su bajo costo
         self.stock_df = CalculateSupertrend(df)
         self.client = HTTP(testnet=False, api_key=id.Api_Key, api_secret=id.Api_Secret)
-        self.qty_xrp,self.qty_one = op.calcular_qty_posicion(self.client)
+        self.qty_xrp = 10 #Valor minimo y fijo para tests con XRPUSDT
         time.sleep(15)
         
         
