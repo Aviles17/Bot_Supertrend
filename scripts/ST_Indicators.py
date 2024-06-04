@@ -10,6 +10,8 @@ import logging as log
 import json
 from datetime import datetime
 from src.Posicion import Posicion
+from requests.exceptions import RequestException
+from websocket._exceptions import WebSocketException
 
 
 '''
@@ -41,7 +43,6 @@ def calcular_qty_posicion(cliente):
     mark_price_one = float(ticker_one['result']['list'][0]['markPrice'])   
     
     # Cantidades de aproximadamente el 2% y 3% de nuestro balance total en 'xrp' y 'one' respectivamente
-    # 
     qty_xrp = math.ceil(((wallet_balance*0.02)/mark_price_xrp)*69)
     qty_one = math.ceil(((wallet_balance*0.03)/mark_price_one)*25)
     
@@ -63,13 +64,21 @@ def calcular_qty_posicion(cliente):
 ###################################################################################
 '''
 def Get_Balance(cliente,symbol: str):
-    filt_Balance = 0
-    while(filt_Balance == 0):
+    filt_Balance = -1
+    while(filt_Balance == -1):
+      try:
         balance = cliente.get_coin_balance(accountType="CONTRACT", coin=symbol)
         if balance is not None:
-            filt_Balance = balance["result"]["balance"]["walletBalance"]
-        else:
-            filt_Balance = 0
+          filt_Balance = balance["result"]["balance"]["walletBalance"]
+      except RequestException as e:
+        log.error(f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
+        time.sleep(10)
+      except WebSocketException as e:
+        log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
+        time.sleep(10)
+      except Exception as e:
+        log.error(f"Ha ocurrido un error inesperado:{e}. Reintentando en 10 segundos...\n")
+        time.sleep(10)
             
     return filt_Balance
 
