@@ -59,10 +59,11 @@ class Posicion:
         return res
     
     def coordinate_order(self, client):
+        retry = False #Variable de control para reintentos en caso de error al no encontrar la información en el API
         if self.id != None:
             while(True):
                 try:
-                    res = client.get_order_history(category="linear",orderId=order.id,)['result']['list'][0]
+                    res = client.get_order_history(category="linear",orderId=self.id)['result']['list'][0]
                     if res['orderId'] == self.id:
                         if res['avgPrice'] != self.price or res['stopLoss'] != self.stoploss:
                             #Revisar y actualizar datos de la posición con relación a la información live
@@ -85,9 +86,14 @@ class Posicion:
                     log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
                     time.sleep(10)
                 except Exception as e:
-                    log.error(f"Se encontro un error inesperado {e}.\n")
-                    break
-                    raise
+                    if isinstance(e, KeyError) and retry == False:
+                        retry = True
+                        log.error(f"Se encontro un error inesperado accediendo a la informacion {e}. Reintentando en 10 segundos...\n")
+                        time.sleep(10)
+                    else:   
+                        log.error(f"Se encontro un error inesperado {e}.\n")
+                        break
+                        raise
         else:
             log.error('La orden seleccionada no se ha creado correctamente [El ID de la orden no es valido]')
     
