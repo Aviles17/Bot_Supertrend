@@ -1,6 +1,8 @@
 import time
 import logging as log
 import math
+from requests.exceptions import RequestException
+from websocket._exceptions import WebSocketException
 
 class Posicion:
     #Constructor del Objeto
@@ -55,6 +57,39 @@ class Posicion:
         self.id = res['result']['orderId']
         log.info(f"Orden {res['result']['orderId']} creada correctamente en BYBIT : {res} de {self.symbol}")
         return res
+    
+    def coordinate_order(self, client):
+        if self.id != None:
+            while(True):
+                try:
+                    res = client.get_order_history(category="linear",orderId=order.id,)['result']['list'][0]
+                    if res['orderId'] == self.id:
+                        if res['avgPrice'] != self.price or res['stopLoss'] != self.stoploss:
+                            #Revisar y actualizar datos de la posición con relación a la información live
+                            if res['avgPrice'] != None:
+                                self.price = res['avgPrice']
+                                log.info(f"La orden {self.id} se actualizo con relación al precio de Bybit correctamente a {self.price} antes de ser cargada a memoria")
+                            if res['stopLoss'] != None:
+                                self.stoploss = res['stopLoss']
+                                log.info(f"La orden {self.id} se actualizo con stoploss con relación al precio de Bybit correctamente a {self.stoploss} antes de ser cargada a memoria")
+                            self.half_price = (2*self.price) - float(self.stoploss)
+                            log.info(f"La orden {self.id} se actualizo el valor del halfprice con relación a la información en Bybit correctamente a {self.half_price} antes de ser cargada a memoria")
+                            break
+                    else:
+                        log.error(f'La orden seleccionada {self.id} no se ha encontrado en Bybit {res['orderId']} [El ID de la orden no se encuentra o no concuerda]')
+                        break
+                except RequestException as e:
+                    log.error(f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
+                    time.sleep(10)
+                except WebSocketException as e:
+                    log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
+                    time.sleep(10)
+                except Exception as e:
+                    log.error(f"Se encontro un error inesperado {e}.\n")
+                    break
+                    raise
+        else:
+            log.error('La orden seleccionada no se ha creado correctamente [El ID de la orden no es valido]')
     
     def close_order(self, client):
         #En el caso de un Long

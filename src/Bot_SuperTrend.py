@@ -20,7 +20,7 @@ def crear_reporte_ordenes(posicion_list: list):
         log.info(f'Reporte de ordenes creado y/o actualizado con exito. Tamaño: {len(posicion_list)}')
         print(f'REPORTE DE ORDENES CREADO Y/O ACTUALIZADO CON EXITO. TAMAÑO: {len(posicion_list)}, {datetime.now()}')
     else:
-        log.warning('No se han ejecutado ordenes')
+        log.info('No se han ejecutado ordenes')
         print(f'NO HAY ORDENES ({datetime.now()})')
 if __name__ == '__main__':
     
