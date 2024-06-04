@@ -24,6 +24,7 @@ class Posicion:
 
 
     def make_order(self, client):
+        retry = False
         if self.side == 'Buy':
             self.position_idx = 1
         elif self.side == 'Sell':
@@ -47,14 +48,23 @@ class Posicion:
                     slTriggerBy = 'MarkPrice',
                     positionIdx = self.position_idx
                 )
+                self.id = res['result']['orderId']
                 break
-            except OSError as e:
+            except RequestException as e:
                 log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
                 time.sleep(10)
+            except WebSocketException as e:
+                    log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
+                    time.sleep(10)
             except Exception as e:
-                log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
-                time.sleep(10) 
-        self.id = res['result']['orderId']
+                if isinstance(e, KeyError) and retry == False:
+                    retry = True
+                    log.error(f"Se encontro un error inesperado accediendo a la informacion {e}. Reintentando en 10 segundos...\n")
+                    time.sleep(10)
+                else:   
+                    log.error(f"Se encontro un error inesperado {e}.\n")
+                    break
+                    raise
         self.coordinate_order(client) #Coordinar información con API
         log.info(f"Orden {res['result']['orderId']} creada correctamente en BYBIT : {res} de {self.symbol}")
         return res
@@ -114,12 +124,16 @@ class Posicion:
                                 positionIdx = 1
                             )
                         break
-                    except OSError as e:
-                        log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+                    except RequestException as e:
+                        log.error(f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
+                        time.sleep(10)
+                    except WebSocketException as e:
+                        log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
                         time.sleep(10)
                     except Exception as e:
-                        log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
-                        time.sleep(10) 
+                        log.error(f"Se encontro un error inesperado {e}.\n")
+                        break
+                        raise
                 log.info(f"Orden {self.id} cerrada correctamente en BYBIT : {res}")
                 return res
             #En el caso de un Short
@@ -136,12 +150,16 @@ class Posicion:
                                 positionIdx = 2
                             )
                         break
-                    except OSError as e:
-                        log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+                    except RequestException as e:
+                        log.error(f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
+                        time.sleep(10)
+                    except WebSocketException as e:
+                        log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
                         time.sleep(10)
                     except Exception as e:
-                        log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
-                        time.sleep(10)
+                        log.error(f"Se encontro un error inesperado {e}.\n")
+                        break
+                        raise
                 log.info(f"Orden {self.id} cerrada correctamente en BYBIT : {res} de {self.symbol}")
                 return res
             else:
@@ -201,12 +219,16 @@ class Posicion:
                                 positionIdx = 1
                             )
                         break
-                    except OSError as e:
-                        log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+                    except RequestException as e:
+                        log.error(f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
+                        time.sleep(10)
+                    except WebSocketException as e:
+                        log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
                         time.sleep(10)
                     except Exception as e:
-                        log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
-                        time.sleep(10)
+                        log.error(f"Se encontro un error inesperado {e}.\n")
+                        break
+                        raise
                 self.half_order = True
                 self.amount = half_amount
                 log.info(f"Orden {self.id} cerrada a la mitad correctamente en BYBIT : {res} de {self.symbol}")
@@ -225,12 +247,16 @@ class Posicion:
                                 positionIdx = 2
                             )
                         break
-                    except OSError as e:
-                        log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+                    except RequestException as e:
+                        log.error(f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
+                        time.sleep(10)
+                    except WebSocketException as e:
+                        log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
                         time.sleep(10)
                     except Exception as e:
-                        log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
-                        time.sleep(10)
+                        log.error(f"Se encontro un error inesperado {e}.\n")
+                        break
+                        raise
                 self.half_order = True
                 self.amount = half_amount
                 log.info(f"Orden {self.id} cerrada a la mitad correctamente en BYBIT : {res}")
@@ -253,11 +279,15 @@ class Posicion:
                     positionIdx=self.position_idx
                 )
                 break
-            except OSError as e:
-                log.error(f"Encountered connection error: {e}. Retrying in 10 seconds...\n")
+            except RequestException as e:
+                log.error(f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
+                time.sleep(10)
+            except WebSocketException as e:
+                log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
                 time.sleep(10)
             except Exception as e:
-                log.error(f"Encountered error: {e}. Retrying in 10 seconds...\n")
-                time.sleep(10) 
+                log.error(f"Se encontro un error inesperado {e}.\n")
+                break
+                raise
         log.info(f"Stoploss de la orden {self.id} modificado correctamente en BYBIT : {res} de {self.symbol}")
         return res
