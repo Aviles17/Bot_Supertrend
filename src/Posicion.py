@@ -276,7 +276,9 @@ class Posicion:
             log.error('La orden seleccionada no se ha creado correctamente [El ID de la orden no es valido]')
             return None
         
-    def modificar_stoploss(self, client, nuevo_stoploss):
+    def modificar_stoploss(self, client, nuevo_stoploss: str):
+        nuevo_stoploss = str(float(nuevo_stoploss) + ((self.amount*float(nuevo_stoploss))*round((0.055/100),3)))
+        print(nuevo_stoploss)
         while(True):
             try:
                 res = client.set_trading_stop(
@@ -298,4 +300,6 @@ class Posicion:
                 break
                 raise
         log.info(f"Stoploss de la orden {self.id} modificado correctamente en BYBIT : {res} de {self.symbol}")
+        self.stoploss = nuevo_stoploss
+        
         return res
