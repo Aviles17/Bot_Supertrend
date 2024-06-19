@@ -10,18 +10,6 @@ from pybit.unified_trading import HTTP
 from datetime import datetime
 import config.Credenciales as id
 
-def crear_reporte_ordenes(posicion_list: list):
-    if len(posicion_list) != 0:
-        #Funcion que crea un reporte de las ordenes ejecutadas
-        with open('data/Reporte_Ordenes.txt', 'w') as f:
-            for i in range(len(posicion_list)):
-                f.write(f"Orden {i+1}: {str(posicion_list[i])}\n")
-            f.close()
-        log.info(f'Reporte de ordenes creado y/o actualizado con exito. Tamaño: {len(posicion_list)}')
-        print(f'REPORTE DE ORDENES CREADO Y/O ACTUALIZADO CON EXITO. TAMAÑO: {len(posicion_list)}, {datetime.now()}')
-    else:
-        log.info('No se han ejecutado ordenes')
-        print(f'NO HAY ORDENES ({datetime.now()})')
 if __name__ == '__main__':
     
     COIN_SUPPORT = ['XRPUSDT','ONEUSDT'] #Monedas en las cuales se ejecutaran operaciones
@@ -44,7 +32,6 @@ if __name__ == '__main__':
             for i in range(len(COIN_SUPPORT)): 
                 log.info(f"Entro al bucle de monedas: {COIN_SUPPORT[i]}")
                 posicion_list, Polaridad_l, symb_cont = op.Trading_logic(client,COIN_SUPPORT,'15', MAX, CANTIDADES, Polaridad_l, posicion_list, symb_cont)
-            crear_reporte_ordenes(posicion_list)
             time.sleep(30) #Espera 30 segundos por ciclo
     else:
         log.error('No se han ingresado las credenciales')
