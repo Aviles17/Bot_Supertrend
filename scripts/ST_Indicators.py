@@ -51,7 +51,7 @@ def calcular_qty_posicion(cliente):
         
     if(qty_one <= 1):
         qty_one = 2*qty_one
- 
+
     return (qty_xrp, qty_one)
 
     
@@ -81,6 +81,56 @@ def Get_Balance(cliente,symbol: str):
         time.sleep(10)
             
     return filt_Balance
+
+'''
+###################################################################################
+[Proposito]: Funcion para obtener todas las ordenes activas en Bybit (Tiempo real)
+[Parametros]: client (Objeto HTTP creado por la biblioteca pybit para acceder al API)
+[Retorno]: Lista con los objetos Posicion creados
+###################################################################################
+'''
+def get_live_orders(client, qty_xrp, qty_one):
+  ret_list = None
+  try:
+    while(True):
+      ret_list = client.get_open_orders(category="linear",settleCoin='USDT',openOnly=0)
+      break
+  except RequestException as e:
+    log.error(f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
+    time.sleep(10)
+  except WebSocketException as e:
+    log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
+    time.sleep(10)
+  except Exception as e:
+    log.error(f"Se encontro un error inesperado {e}.\n")
+    raise
+
+  if ret_list != None:
+    result = []
+    iterable = ret_list['result']['list']
+    if len(iterable) > 0:
+      for order in iterable:
+        if order['side'] == 'Sell':
+          label = -1
+        elif order['side'] == 'Buy':
+          label = 1
+        else:
+          label = 0
+        pos = Posicion(order['side'],order['symbol'],float(order['qty']),label,order['triggerPrice'],float(order['lastPriceOnCreated']),order['updatedTime'])
+        #Correccion de integridad de los datos para eventos locales (Llegar a halfprice)
+        if pos.symbol == 'XRPUSDT':
+          if pos.amount < qty_xrp:
+            pos.half_order = True
+        elif pos.symbol == 'ONEUSDT':
+          if pos.amount < qty_one:
+            pos.half_order = True
+
+        result.append(pos)
+    return result
+  
+  else:
+    return None
+
 
 '''
 ###################################################################################
