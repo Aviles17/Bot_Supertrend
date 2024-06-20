@@ -22,3 +22,4 @@ data/*
 
 #Ignore build project info files
 *.egg-info/
+.vscode/
