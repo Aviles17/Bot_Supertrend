@@ -34,6 +34,7 @@ def Trading_setup():
 
 def Trading_setup_LLT(ip_server: str, port_server: int):
     if ip_server != None and port_server != None:
+        print(f'Conectando al servidor {ip_server}:{port_server}')
         server_address = (ip_server, port_server) #La configuración del servidor TCP debe ser igual a la del Heartbeat_server.cpp
     else:
         raise Exception('No se han configurado la ip y puerto en el archivo .env')

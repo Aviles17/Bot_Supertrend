@@ -29,7 +29,7 @@ independiente, que debe ser compilada y ejecutada por separado en otro ambiente.
 
 using namespace std;
 
-const int PORT = 65432;
+const int PORT = 5000;
 const int TIMEOUT = 120; // Timeout in seconds
 
 int main() {
