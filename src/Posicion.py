@@ -277,8 +277,13 @@ class Posicion:
             return None
         
     def modificar_stoploss(self, client, nuevo_stoploss: str):
-        nuevo_stoploss = str(float(nuevo_stoploss) + ((self.amount*float(nuevo_stoploss))*round((0.055/100),3)))
-        print(nuevo_stoploss)
+        if self.side == 'Buy':
+            nuevo_stoploss = str(float(nuevo_stoploss) + ((self.amount*float(nuevo_stoploss))*round((0.055/100),3)))
+        elif self.side == 'Sell':
+            nuevo_stoploss = str(float(nuevo_stoploss) - ((self.amount*float(nuevo_stoploss))*round((0.055/100),3)))
+        else:
+            log.error('La orden seleccionada no se ha creado correctamente [El lado de la orden no es valido]')
+            return None
         while(True):
             try:
                 res = client.set_trading_stop(

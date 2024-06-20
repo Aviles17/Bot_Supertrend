@@ -51,7 +51,7 @@ def calcular_qty_posicion(cliente):
         
     if(qty_one <= 1):
         qty_one = 2*qty_one
- 
+
     return (qty_xrp, qty_one)
 
     
@@ -81,6 +81,56 @@ def Get_Balance(cliente,symbol: str):
         time.sleep(10)
             
     return filt_Balance
+
+'''
+###################################################################################
+[Proposito]: Funcion para obtener todas las ordenes activas en Bybit (Tiempo real)
+[Parametros]: client (Objeto HTTP creado por la biblioteca pybit para acceder al API)
+[Retorno]: Lista con los objetos Posicion creados
+###################################################################################
+'''
+def get_live_orders(client, qty_xrp, qty_one):
+  ret_list = None
+  try:
+    while(True):
+      ret_list = client.get_open_orders(category="linear",settleCoin='USDT',openOnly=0)
+      break
+  except RequestException as e:
+    log.error(f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
+    time.sleep(10)
+  except WebSocketException as e:
+    log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
+    time.sleep(10)
+  except Exception as e:
+    log.error(f"Se encontro un error inesperado {e}.\n")
+    raise
+
+  if ret_list != None:
+    result = []
+    iterable = ret_list['result']['list']
+    if len(iterable) > 0:
+      for order in iterable:
+        if order['side'] == 'Sell':
+          label = -1
+        elif order['side'] == 'Buy':
+          label = 1
+        else:
+          label = 0
+        pos = Posicion(order['side'],order['symbol'],float(order['qty']),label,order['triggerPrice'],float(order['lastPriceOnCreated']),order['updatedTime'])
+        #Correccion de integridad de los datos para eventos locales (Llegar a halfprice)
+        if pos.symbol == 'XRPUSDT':
+          if pos.amount < qty_xrp:
+            pos.half_order = True
+        elif pos.symbol == 'ONEUSDT':
+          if pos.amount < qty_one:
+            pos.half_order = True
+
+        result.append(pos)
+    return result
+  
+  else:
+    return None
+
 
 '''
 ###################################################################################
@@ -182,71 +232,6 @@ def ema(source, length):
   ema_series = pd.Series(ema_values)          
   return ema_series
 
-
-'''
-###################################################################################
-[Proposito]: Funcion para escribir los registros de las ordenes que se han hecho en formato txt segun el PATH seleccionado
-[Parametros]: order (Objeto de la clase Posicion que contiene la informacion de la orden),
-              tipo (El tipo de transaccion que se hizo, apertura o cerrar), 
-              mensaje (El mensaje de retorno de la peticion HTTP de bybit),
-              close_order_price (Precio al que se cerro la orden)
-[Retorno]: Retorna la variable Contador con la informacion actualizada de que se añadio
-###################################################################################
-'''
-def EscribirRegistros(order: Posicion, tipo: str, mensaje: str, close_order_price= 0):
-  
-  #Si la operacion que se hizo fue abrir una posicion
-  if(tipo == 'Open'):
-    #Path para escribir los registros de apertura
-    PATH_OPEN = "data/Aperturas"
-    # Verificar si el directorio existe
-    if not os.path.exists(PATH_OPEN):
-        os.makedirs(PATH_OPEN)
-    #Escribir registros de un Close
-    if(order.side == 'Buy'):
-      data = {"status": "Open", "symbol": order.symbol, "side": order.side, "close_price": order.price, "polaridad": str(order.label), "stoploss": order.stoploss ,"res_msg": mensaje }
-      with open(os.path.join(PATH_OPEN, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_LONG.json"), 'w') as file:
-        json.dump(data, file)
-      
-    #Escribir registros de un Short  
-    if(order.side == 'Sell'):
-      data = {"status": "Open", "symbol": order.symbol, "side": order.side, "close_price": order.price, "polaridad": str(order.label), "stoploss": order.stoploss ,"res_msg": mensaje }
-      with open(os.path.join(PATH_OPEN, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_SHORT.json"), 'w') as file:
-        json.dump(data, file)
-    
-  #Si la operacion que se hizo fue cerrar una posicion    
-  elif(tipo == 'Close' and close_order_price != 0):
-    #Path para escribir los registros de apertura
-    PATH_CLOSE = "data/Cerradas"
-    # Verificar si el directorio existe
-    if not os.path.exists(PATH_CLOSE):
-        os.makedirs(PATH_CLOSE)
-    if order.half_order == False:
-      if(order.side == 'Buy'):
-        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*100) ,"res_msg": mensaje}
-        with open(os.path.join(PATH_CLOSE, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_LONG.json"), 'w') as file:
-          json.dump(data, file)
-      
-      if(order.side == 'Sell'):
-        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*-100) ,"res_msg": mensaje}
-        with open(os.path.join(PATH_CLOSE, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_SHORT.json"), 'w') as file:
-          json.dump(data, file)
-          
-    #Caso de venta media posicion TO-DO: Añadir Reporte
-    else:
-      if(order.side == 'Buy'):
-        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*100) ,"res_msg": mensaje}
-        with open(os.path.join(PATH_CLOSE, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_HALF_LONG.json"), 'w') as file:
-          json.dump(data, file)
-      
-      if(order.side == 'Sell'):
-        data = {"status": "Close", "symbol": order.symbol, "side": order.side, "close_price": close_order_price, "polaridad": str(order.label), "P&L": str((((close_order_price - order.price)/order.price)*100)*-100) ,"res_msg": mensaje}
-        with open(os.path.join(PATH_CLOSE, datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_HALF_SHORT.json"), 'w') as file:
-          json.dump(data, file)
-    
-  else:
-    log.error("La solicitud es incorrecta, el tipo de orden no existe")
-  
 '''
 ###################################################################################
 [Proposito]: Funcion para revisar las ordenes en cola que aun no se han vendido
@@ -271,7 +256,7 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
         elif(posicion.label != df['Polaridad'].iloc[1] and posicion.is_profit(float(df['Close'].iloc[0])) and posicion.time != df['Time'].iloc[0]):
           res = posicion.close_order(client)
           if res['retMsg'] == 'OK':
-            EscribirRegistros(posicion,'Close', str(res), close_order_price= float(df['Close'].iloc[0]))
+            log.info(f"La posicion [{str(posicion)}] se ha cerrado exitosamente a un precio de {df['Close'].iloc[0]}")
           else:
             log.error(f"Error al cerrar la orden: {res}")
           
@@ -364,7 +349,7 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
         log.info(f"El valor del close del stock {symb} es mayor al DEMA800 ({df['Close'].iloc[1]} > {df['DEMA800'].iloc[1]})[Tercer Tier]")
         order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]))
         res = order.make_order(client)
-        EscribirRegistros(order,'Open', str(res))
+        log.info(f"La orden [{str(order)}] se ha abierto exitosamente")
         posicion_list.append(order)
         Polaridad_l[symb_cont] = df['Polaridad'].iloc[1]
         log.info(f"Orden de compra realizada con exito para {symb} [Cuarto Tier]")
@@ -378,7 +363,7 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
         log.info(f"El valor del close del stock {symb} es menor al DEMA800 ({df['Close'].iloc[1]} < {df['DEMA800'].iloc[1]})[Tercer Tier]")
         order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]))
         res = order.make_order(client)
-        EscribirRegistros(order,'Open',str(res))
+        log.info(f"La orden [{str(order)}] se ha abierto exitosamente")
         posicion_list.append(order)
         Polaridad_l[symb_cont] = df['Polaridad'].iloc[1]
         log.info(f"Orden de compra realizada con exito para {symb} [Cuarto Tier]")
