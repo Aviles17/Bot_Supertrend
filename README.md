@@ -32,10 +32,20 @@ Utilizando la herramienta `pip` se pueden instalar todas las dependencias del pr
 ```
 cd Bot_Supertrend
 pip install -r requirements.txt
+pip install -e .
 ```
 
 ## Uso
-1. Lo primero que se necesita hacer, es actualizar el archivo de credenciales para poder conectarse a tu API personal en el directorio ` config/Credenciales.py `:
+1. Lo primero que se necesita hacer, es actualizar y/o crear el archivo de `.env` con las variables de entorno usadas en el proyecto siguiendose de esta plantilla:
+
+  ```
+  LLT= #Ingresar un valor entre True o False 
+  IP = #Ingresar la dirección IP donde va a correr el Heartbeat
+  PORT = #Ingresar el puerto por donde va a existir comunicación
+
+  Api_Key = #Ingresar llave publica de Bybit
+  Api_Secret = #Ingresar llave privada de Bybit
+  ```
 2. Lo siguiente es correr el archivo ` src/Bot_SuperTrend.py ` 
 **¡AVISO!**  Al correr este código, solo se negociará con las monedas **ETH** & **XRP** 
 

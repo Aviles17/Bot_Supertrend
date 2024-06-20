@@ -15,6 +15,7 @@ el fallo.
 
 Este codigo no esta relacionado al proyecto de forma intrinseca, significando que esta es una pieza totalmente
 independiente, que debe ser compilada y ejecutada por separado en otro ambiente.
+    Por ende, se recominda copiar el archivo a otro espacio de trabajo una vez clonado el repo
 ##################################################################################################################
 */
 
@@ -29,7 +30,7 @@ independiente, que debe ser compilada y ejecutada por separado en otro ambiente.
 using namespace std;
 
 const int PORT = 65432;
-const int TIMEOUT = 60; // Timeout in seconds
+const int TIMEOUT = 120; // Timeout in seconds
 
 int main() {
     //Crear un socket para la comunicación

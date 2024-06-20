@@ -12,7 +12,7 @@ __pycache__/
 BotEnv/
 
 #Ignorar archivos de configuracion
-Credenciales.py
+.env
 
 #Ignorar archivos de logs
 *.log
