@@ -15,3 +15,5 @@ RUN pip install -e .
 
 #Ejecutar el programa
 CMD ["python", "src/Bot_SuperTrend.py"]
+
+#Para la ejecución de la imagen (Ya construida) usar el comando: docker run --network=host --name bot-supertrend-container <nombre-imagen>
