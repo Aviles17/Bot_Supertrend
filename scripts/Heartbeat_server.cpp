@@ -26,18 +26,36 @@ independiente, que debe ser compilada y ejecutada por separado en otro ambiente.
 #include <unistd.h>
 #include <chrono>
 #include <thread>
+#include <csignal>
+
+#define PORT 5000
+#define TIMEOUT 120
 
 using namespace std;
 
-const int PORT = 5000;
-const int TIMEOUT = 120; // Timeout in seconds
+int sock = -1; //Socket del servidor predeterminado para la comunicación
+int client_sock = -1; //Socket del cliente predeterminado para la comunicación
 
-int main() {
+void handleCtrlC(int sig){
+    if (sig == SIGINT){
+        cout << "\nEjecución cancelada por el usuario" << endl;
+        if (client_sock != -1) {
+            close(client_sock);
+        }
+        if (sock != -1) {
+            close(sock);
+        }
+        exit(0);
+    }
+
+}
+
+pair<int,int> setupServer(){
     //Crear un socket para la comunicación
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
         cerr << "Error al crear el socket" << endl;
-        return 1;
+        return {-1,-1};
     }
 
     //Configurar la dirección del servidor
@@ -50,13 +68,15 @@ int main() {
     if(bind(sock, (sockaddr *)&address, sizeof(address)) == -1) 
     {
         cerr << "Error al conectar al servidor" << endl;
-        return 1;
+        close(sock);
+        return {-1,-1};
     }
 
     //Escuchar por conexiones entrantes
     if(listen(sock, 1) == -1) {
         cerr << "Error al escuchar" << endl;
-        return 1;
+        close(sock);
+        return {-1,-1};
     }
     cout << "Escuchando en el puerto " << PORT << "..." << endl;
 
@@ -66,10 +86,24 @@ int main() {
     int client_sock = accept(sock, (sockaddr *)&client_address, &client_address_size);
     if (client_sock == -1) {
         cerr << "Error al aceptar la nueva conexión" << endl;
-        return 1;
+        close(sock);
+        return {-1,-1};
     }
     cout << "Conexión aceptada desde " << inet_ntoa(client_address.sin_addr) << ":" << ntohs(client_address.sin_port) << endl;
 
+    return {sock, client_sock};
+}
+
+int main() {
+    //Registrar Ctrl+C para cerrar el servidor
+    signal(SIGINT, handleCtrlC);
+
+    auto [sock, client_sock] = setupServer();
+    if (sock == -1 || client_sock == -1) {
+        cout << "Error al inicializar el servidor" << endl;
+        return -1;
+    }
+    
     //Crear bucle que escuha por datos entrantes
     char buffer[1024];
     ssize_t bytes_received;
@@ -103,8 +137,25 @@ int main() {
                 this_thread::sleep_for(chrono::milliseconds(100));
             }
         }
-    }
 
+        if (timeout_exceeded) {
+            // En caso de timeout, cerrar los sockets y levantar el servicio nuevamente
+            close(client_sock);
+            close(sock);
+
+            //TODO : Implementar el reinicio del servidor con bash
+
+            auto [new_sock, new_client_sock] = setupServer();
+            if (new_sock == -1 || new_client_sock == -1) {
+                cout << "Error al inicializar el servidor" << endl;
+                return -1;
+            }
+
+            sock = new_sock; //Reasignar los sockets
+            client_sock = new_client_sock; //Reasignar los sockets
+            cout << "Servicio y Servidor reiniciado" << endl;
+        }
+    }
     //Cerramos los sockets
     close(client_sock);
     close(sock);
