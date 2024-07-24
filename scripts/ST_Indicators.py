@@ -116,7 +116,8 @@ def get_live_orders(client, qty_xrp, qty_one):
           label = 1
         else:
           label = 0
-        pos = Posicion(order['side'],order['symbol'],float(order['qty']),label,order['triggerPrice'],float(order['lastPriceOnCreated']),order['updatedTime'])
+        #Si la posición es recuperada los datos de apertura no pueden ser recuperados (No son responsabilidad del programa)
+        pos = Posicion(order['side'],order['symbol'],float(order['qty']),label,order['triggerPrice'],float(order['lastPriceOnCreated']),order['updatedTime'],None,None,None,None,None)
         #Correccion de integridad de los datos para eventos locales (Llegar a halfprice)
         if pos.symbol == 'XRPUSDT':
           if pos.amount < qty_xrp:
@@ -254,7 +255,7 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
           
         #Revision normal de las condiciones de venta (Profit, polaridad distinta y tiempo distinto al de la orden)
         elif(posicion.label != df['Polaridad'].iloc[1] and posicion.is_profit(float(df['Close'].iloc[0])) and posicion.time != df['Time'].iloc[0]):
-          res = posicion.close_order(client)
+          res = posicion.close_order(client, float(df['Close'].iloc[0]))
           if res['retMsg'] == 'OK':
             log.info(f"La posicion [{str(posicion)}] se ha cerrado exitosamente a un precio de {df['Close'].iloc[0]}")
           else:
@@ -347,7 +348,7 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
       log.info(f"El close del symbolo {symb} es mayor a la supertrend ({df['Close'].iloc[1]} > {df['Supertrend'].iloc[1]}), la polaridad es {df['Polaridad'].iloc[1]} y diferente a el anterior registro {df['Polaridad'].iloc[2]} [Segundo Tier]")
       if(df['Close'].iloc[1] >= df['DEMA800'].iloc[1]):
         log.info(f"El valor del close del stock {symb} es mayor al DEMA800 ({df['Close'].iloc[1]} > {df['DEMA800'].iloc[1]})[Tercer Tier]")
-        order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]))
+        order = Posicion('Buy',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]), float(df['Open'].iloc[0]), float(df['High'].iloc[0]), float(df['Low'].iloc[0]), float(df['Volume'].iloc[0]), float(df['DEMA800'].iloc[0]))
         res = order.make_order(client)
         log.info(f"La orden [{str(order)}] se ha abierto exitosamente")
         posicion_list.append(order)
@@ -361,7 +362,7 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
       log.info(f"El close del symbolo {symb} es menor a la supertrend ({df['Close'].iloc[1]} < {df['Supertrend'].iloc[1]}), la polaridad es {df['Polaridad'].iloc[1]} y diferente a el anterior registro {df['Polaridad'].iloc[2]} [Segundo Tier]")
       if(df['Close'].iloc[1] <= df['DEMA800'].iloc[1]):
         log.info(f"El valor del close del stock {symb} es menor al DEMA800 ({df['Close'].iloc[1]} < {df['DEMA800'].iloc[1]})[Tercer Tier]")
-        order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]))
+        order = Posicion('Sell',symb,cantidad,df['Polaridad'].iloc[1],str(round(float(df['Supertrend'].iloc[0]),4)), float(df['Close'].iloc[0]), str(df['Time'].iloc[0]), float(df['Open'].iloc[0]), float(df['High'].iloc[0]), float(df['Low'].iloc[0]), float(df['Volume'].iloc[0]), float(df['DEMA800'].iloc[0]))
         res = order.make_order(client)
         log.info(f"La orden [{str(order)}] se ha abierto exitosamente")
         posicion_list.append(order)

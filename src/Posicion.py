@@ -1,12 +1,15 @@
 import time
 import logging as log
 import math
+import os
+import csv
 from requests.exceptions import RequestException
 from websocket._exceptions import WebSocketException
 
 class Posicion:
     #Constructor del Objeto
-    def __init__(self,side: str, symbol: str, amount: float, label: int, stoploss: str, price: float, order_time: str):
+    def __init__(self,side: str, symbol: str, amount: float, label: int, stoploss: str, price: float, order_time: str, open: float, high: float, low: float, volume: float, dema800: float):
+        #Variables necesarias para crear la orden y seguir con la logica de negocio
         self.id = None
         self.position_idx = None
         self.side = side
@@ -18,6 +21,13 @@ class Posicion:
         self.time = order_time
         self.half_price = (2*price) - float(stoploss)
         self.half_order = False
+        #Atributos requeridos para inteligencia o BD
+        self.open = open
+        self.high = high
+        self.low = low
+        self.volume = volume
+        self.dema800 = dema800
+        self.supertrend = stoploss
     
     def __str__(self):
         return f"Posicion(id={self.id}, side={self.side}, symbol={self.symbol}, amount={self.amount}, label={self.label}, stoploss={self.stoploss}, price={self.price}, time={self.time}, half_price={self.half_price}, half_order_made={self.half_order})"
@@ -116,7 +126,7 @@ class Posicion:
         else:
             log.error('La orden seleccionada no se ha creado correctamente [El ID de la orden no es valido]')
     
-    def close_order(self, client):
+    def close_order(self, client, current_pice: float):
         #En el caso de un Long
         if self.id != None:  
             if(self.side == 'Buy'):
@@ -143,6 +153,8 @@ class Posicion:
                         break
                         raise
                 log.info(f"Orden {self.id} cerrada correctamente en BYBIT : {res}")
+                #Crear registro de salida
+                self.crear_csv_ordenes(self.is_profit(current_pice))
                 return res
             #En el caso de un Short
             elif(self.side == 'Sell'):
@@ -169,6 +181,8 @@ class Posicion:
                         break
                         raise
                 log.info(f"Orden {self.id} cerrada correctamente en BYBIT : {res} de {self.symbol}")
+                #Crear registro de salida
+                self.crear_csv_ordenes(self.is_profit(current_pice))
                 return res
             else:
                 log.error('La orden seleccionada no se ha creado correctamente [El lado de la orden no es valido]')
@@ -178,7 +192,6 @@ class Posicion:
             return None
 
     def is_profit(self, current_pice: float):
-        
         if self.side == 'Buy':
             if self.price < current_pice:
                 return True
@@ -302,9 +315,25 @@ class Posicion:
                 time.sleep(10)
             except Exception as e:
                 log.error(f"Se encontro un error inesperado {e}.\n")
+                res = None
                 break
                 raise
         log.info(f"Stoploss de la orden {self.id} modificado correctamente en BYBIT : {res} de {self.symbol}")
         self.stoploss = nuevo_stoploss
         
         return res
+
+    def crear_csv_ordenes(self, profit: bool):
+        if not os.path.exists("data"):
+            os.makedirs("data")
+        
+        filepath = os.path.join("data","history.csv")
+        fileexist = os.path.isfile(filepath)
+        headers = ['Time','Symbol', 'Open', 'High', 'Low', 'Close', 'Volume', 'Supertrend',
+                'Polaridad', 'DEMA800', "Half-Order", "Profit"]
+        
+        with open(filepath, mode='a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            if not fileexist:
+                writer.writerow(headers)
+            writer.writerow([self.time,self.symbol,self.open,self.high,self.price,self.volume,self.supertrend,self.side,self.dema800,self.half_price,profit])

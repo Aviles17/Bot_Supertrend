@@ -47,10 +47,21 @@ void handleCtrlC(int sig){
         }
         exit(0);
     }
-
 }
 
-pair<int,int> setupServer(){
+void kill_python_bot(){
+    if(system("pgrep -f src/Bot_SuperTrend.py") == 0){
+        // Si el processo python se encuentra en ejecución lo matamos
+        system("pkill -f src/Bot_SuperTrend.py");
+    }
+    // Si el proceso python no se encuentra en ejecución, no hacemos nada
+}
+
+void restart_python_bot(){
+    system("nohup python src/Bot_SuperTrend.py &");
+}
+
+pair<int,int> setupServer(int reinicio){
     //Crear un socket para la comunicación
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
@@ -80,6 +91,11 @@ pair<int,int> setupServer(){
     }
     cout << "Escuchando en el puerto " << PORT << "..." << endl;
 
+    if (reinicio == 1){
+        kill_python_bot();
+        restart_python_bot();
+    }
+
     //Aceptar una nueva conexión
     sockaddr_in client_address;
     socklen_t client_address_size = sizeof(client_address);
@@ -98,7 +114,7 @@ int main() {
     //Registrar Ctrl+C para cerrar el servidor
     signal(SIGINT, handleCtrlC);
 
-    auto [sock, client_sock] = setupServer();
+    auto [sock, client_sock] = setupServer(0);
     if (sock == -1 || client_sock == -1) {
         cout << "Error al inicializar el servidor" << endl;
         return -1;
@@ -143,9 +159,7 @@ int main() {
             close(client_sock);
             close(sock);
 
-            //TODO : Implementar el reinicio del servidor con bash
-
-            auto [new_sock, new_client_sock] = setupServer();
+            auto [new_sock, new_client_sock] = setupServer(1);
             if (new_sock == -1 || new_client_sock == -1) {
                 cout << "Error al inicializar el servidor" << endl;
                 return -1;
@@ -153,6 +167,8 @@ int main() {
 
             sock = new_sock; //Reasignar los sockets
             client_sock = new_client_sock; //Reasignar los sockets
+
+            timeout_exceeded = false;
             cout << "Servicio y Servidor reiniciado" << endl;
         }
     }
