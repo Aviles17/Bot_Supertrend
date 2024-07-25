@@ -34,7 +34,6 @@ def calcular_qty_posicion(cliente):
         symbol = "XRPUSDT",
     )
     mark_price_xrp = float(ticker_xrp['result']['list'][0]['markPrice'])   
-    ###
     ticker_one = cliente.get_tickers(
         testnet = False,
         category = "linear",
@@ -110,14 +109,17 @@ def get_live_orders(client, qty_xrp, qty_one):
     iterable = ret_list['result']['list']
     if len(iterable) > 0:
       for order in iterable:
-        if order['side'] == 'Sell':
-          label = -1
-        elif order['side'] == 'Buy':
+        if order['side'] == 'Sell': #Si es Sell en Bybit implica to be Sell -> Por ende es un Long
+          ori_side = 'Buy'
           label = 1
+        elif order['side'] == 'Buy': #Si es Buy en Bybit implica to be Buy -> Por ende es un Short
+          ori_side = 'Sell'
+          label = -1
         else:
           label = 0
         #Si la posición es recuperada los datos de apertura no pueden ser recuperados (No son responsabilidad del programa)
-        pos = Posicion(order['side'],order['symbol'],float(order['qty']),label,order['triggerPrice'],float(order['lastPriceOnCreated']),order['updatedTime'],None,None,None,None,None)
+        pos = Posicion(ori_side,order['symbol'],float(order['qty']),label,order['triggerPrice'],float(order['lastPriceOnCreated']),order['updatedTime'],None,None,None,None,None)
+        pos.id = order['orderId']
         #Correccion de integridad de los datos para eventos locales (Llegar a halfprice)
         if pos.symbol == 'XRPUSDT':
           if pos.amount < qty_xrp:
