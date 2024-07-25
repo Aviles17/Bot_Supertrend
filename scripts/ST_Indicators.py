@@ -252,9 +252,11 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
         #Caso de venta de la orden por stoploss
         if posicion.stop_loss_reached(float(df['High'].iloc[0]), float(df['Low'].iloc[0])):
           log.info(f"Stoploss alcanzado para la orden: {posicion.id}|{posicion.symbol}|{posicion.side}|{posicion.price}")
+          posicion.crear_csv_ordenes(False) #Crear fragmento de data con target false -> siendo que se perdio
           
         #Revision normal de las condiciones de venta (Profit, polaridad distinta y tiempo distinto al de la orden)
         elif(posicion.label != df['Polaridad'].iloc[1] and posicion.is_profit(float(df['Close'].iloc[0])) and posicion.time != df['Time'].iloc[0]):
+          log.info(f"La posición {posicion.id} con simbolo {posicion.symbol} ha cumplido las condiciones para ser cerrada en profit")
           res = posicion.close_order(client, float(df['Close'].iloc[0]))
           if res['retMsg'] == 'OK':
             log.info(f"La posicion [{str(posicion)}] se ha cerrado exitosamente a un precio de {df['Close'].iloc[0]}")
@@ -281,6 +283,7 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
             updated_arr.append(posicion)
       else:
         updated_arr.append(posicion)
+  log.info(f"El arreglo de ordenes activas contiene {len(updated_arr)}")      
   return updated_arr
 '''
 ###################################################################################
