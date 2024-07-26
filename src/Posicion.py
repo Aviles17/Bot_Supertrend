@@ -21,6 +21,7 @@ class Posicion:
         self.time = order_time
         self.half_price = (2*price) - float(stoploss)
         self.half_order = False
+        self.stoploss_pending = False
         #Atributos requeridos para inteligencia o BD
         self.open = open
         self.high = high
@@ -290,6 +291,7 @@ class Posicion:
             return None
         
     def modificar_stoploss(self, client, nuevo_stoploss: str):
+        default_stoploss = nuevo_stoploss
         if self.side == 'Buy':
             nuevo_stoploss = str(float(nuevo_stoploss) + ((self.amount*float(nuevo_stoploss))*round((0.055/100),3)))
         elif self.side == 'Sell':
@@ -306,6 +308,7 @@ class Posicion:
                     stopLoss=nuevo_stoploss,
                     positionIdx=self.position_idx
                 )
+                self.stoploss = nuevo_stoploss
                 break
             except RequestException as e:
                 log.error(f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
@@ -314,13 +317,41 @@ class Posicion:
                 log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
                 time.sleep(10)
             except Exception as e:
-                log.error(f"Se encontro un error inesperado {e}.\n")
-                res = None
-                break
-                raise
-        log.info(f"Stoploss de la orden {self.id} modificado correctamente en BYBIT : {res} de {self.symbol}")
-        self.stoploss = nuevo_stoploss
-        
+                log.error(f"Se encontro un error inesperado, se tratara de usar el stoploss por defecto {default_stoploss}. Error: {e}.\n")
+                if self.stoploss_pending == False:
+                    self.stoploss_pending = True
+                    #Normalmente sera un error de parametros por lo que se maneja con el stoploss por defecto
+                    while(True):
+                        try:
+                            res = client.set_trading_stop(
+                            category= "linear",
+                            symbol= self.symbol, 
+                            side=self.side,
+                            stopLoss=default_stoploss,
+                            positionIdx=self.position_idx
+                            )
+                            self.stoploss = default_stoploss
+                            break
+                        except RequestException as e:
+                            log.error(f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
+                            time.sleep(10)
+                        except WebSocketException as e:
+                            log.error(f"Se encontro un error de WebSocket {e}. Reintentando en 10 segundos...\n")
+                            time.sleep(10)
+                        except Exception as e:
+                            log.error(f"Se encontro un error inesperado usando el stoploss por defecto {e}.\n")
+                            res = None
+                            break
+                            raise
+                else:
+                    res = None
+                    break
+                    raise
+        if res != None:
+            log.info(f"Stoploss de la orden {self.id} modificado correctamente en BYBIT : {res} de {self.symbol}")
+        else:
+            log.error(f"No fue possible cambiar el stoploss ni a la version modificada ni al default para la orden {self.id}")
+            
         return res
 
     def crear_csv_ordenes(self, profit: bool):
@@ -329,11 +360,11 @@ class Posicion:
         
         filepath = os.path.join("data","history.csv")
         fileexist = os.path.isfile(filepath)
-        headers = ['Time','Symbol', 'Open', 'High', 'Low', 'Close', 'Volume', 'Supertrend',
+        headers = ['Id','Time','Symbol', 'Open', 'High', 'Low', 'Close', 'Volume', 'Supertrend',
                 'Polaridad', 'DEMA800', "Half-Order", "Profit"]
         
         with open(filepath, mode='a', newline='') as csvfile:
             writer = csv.writer(csvfile)
             if not fileexist:
                 writer.writerow(headers)
-            writer.writerow([self.time,self.symbol,self.open,self.high,self.price,self.volume,self.supertrend,self.side,self.dema800,self.half_price,profit])
+            writer.writerow([self.id,self.time,self.symbol,self.open,self.high,self.price,self.volume,self.supertrend,self.side,self.dema800,self.half_order,profit])

@@ -27,6 +27,7 @@ independiente, que debe ser compilada y ejecutada por separado en otro ambiente.
 #include <chrono>
 #include <thread>
 #include <csignal>
+#include <filesystem>
 
 #define PORT 5000
 #define TIMEOUT 120
@@ -58,7 +59,17 @@ void kill_python_bot(){
 }
 
 void restart_python_bot(){
-    system("nohup python src/Bot_SuperTrend.py &");
+    filesystem::path TradingPath = "Trading_backup.log";
+    filesystem::path OutputPath = "output_backup.log";
+    //Antes de reiniciar es necesario guardar una copia de los logs del bot (Para saber que salio mal)
+    if(!filesystem::exists(TradingPath)){
+        system("cp Trading.log Trading_backup.log");
+    }
+    if(!filesystem::exists(OutputPath)){
+        system("cp output.log output_backup.log");
+    }
+    //Reiniciar el processo
+    system("nohup python src/Bot_SuperTrend.py > output.log &");
 }
 
 pair<int,int> setupServer(int reinicio){

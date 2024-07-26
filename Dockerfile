@@ -29,6 +29,6 @@ RUN chmod +x Heartbeat_server
 RUN chmod +x scripts/start.sh
 
 #Ejecutar iniciador de software (start.sh)
-CMD ["./scripts/start.sh"]
+CMD ["./scripts/start-docker.sh"]
 
 #Para la ejecución de la imagen (Ya construida) usar el comando: docker run --network=host --name bot-supertrend-container <nombre-imagen>
