@@ -68,8 +68,19 @@ void restart_python_bot(){
     if(!filesystem::exists(OutputPath)){
         system("cp output.log output_backup.log");
     }
-    //Reiniciar el processo
-    system("nohup python src/Bot_SuperTrend.py > output.log &");
+
+    if(system("which python > /dev/null 2>&1") == 0){
+        //Reiniciar el processo
+        system("nohup python src/Bot_SuperTrend.py > output.log &");
+    }
+    else if(system("which python3 > /dev/null 2>&1") == 0){
+        //Reiniciar el processo
+        system("nohup python3 src/Bot_SuperTrend.py > output.log &");
+    }
+    else{
+        cout << "No se encontro una version de python con la cual reiniciar el sistema"
+        exit(0);
+    }
 }
 
 pair<int,int> setupServer(int reinicio){

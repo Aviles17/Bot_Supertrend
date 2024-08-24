@@ -293,9 +293,9 @@ class Posicion:
     def modificar_stoploss(self, client, nuevo_stoploss: str):
         default_stoploss = nuevo_stoploss
         if self.side == 'Buy':
-            nuevo_stoploss = str(float(nuevo_stoploss) + ((self.amount*float(nuevo_stoploss))*round((0.055/100),3)))
+            nuevo_stoploss = str(float(nuevo_stoploss) + ((self.amount*float(nuevo_stoploss))*round((0.055/100),5)))
         elif self.side == 'Sell':
-            nuevo_stoploss = str(float(nuevo_stoploss) - ((self.amount*float(nuevo_stoploss))*round((0.055/100),3)))
+            nuevo_stoploss = str(float(nuevo_stoploss) - ((self.amount*float(nuevo_stoploss))*round((0.055/100),5)))
         else:
             log.error('La orden seleccionada no se ha creado correctamente [El lado de la orden no es valido]')
             return None
