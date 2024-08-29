@@ -27,6 +27,7 @@ independiente, que debe ser compilada y ejecutada por separado en otro ambiente.
 #include <chrono>
 #include <thread>
 #include <csignal>
+#include <filesystem>
 
 #define PORT 5000
 #define TIMEOUT 120
@@ -58,7 +59,28 @@ void kill_python_bot(){
 }
 
 void restart_python_bot(){
-    system("nohup python src/Bot_SuperTrend.py &");
+    filesystem::path TradingPath = "Trading_backup.log";
+    filesystem::path OutputPath = "output_backup.log";
+    //Antes de reiniciar es necesario guardar una copia de los logs del bot (Para saber que salio mal)
+    if(!filesystem::exists(TradingPath)){
+        system("cp Trading.log Trading_backup.log");
+    }
+    if(!filesystem::exists(OutputPath)){
+        system("cp output.log output_backup.log");
+    }
+
+    if(system("which python > /dev/null 2>&1") == 0){
+        //Reiniciar el processo
+        system("nohup python src/Bot_SuperTrend.py > output.log &");
+    }
+    else if(system("which python3 > /dev/null 2>&1") == 0){
+        //Reiniciar el processo
+        system("nohup python3 src/Bot_SuperTrend.py > output.log &");
+    }
+    else{
+        cout << "No se encontro una version de python con la cual reiniciar el sistema"
+        exit(0);
+    }
 }
 
 pair<int,int> setupServer(int reinicio){

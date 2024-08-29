@@ -34,7 +34,6 @@ def calcular_qty_posicion(cliente):
         symbol = "XRPUSDT",
     )
     mark_price_xrp = float(ticker_xrp['result']['list'][0]['markPrice'])   
-    ###
     ticker_one = cliente.get_tickers(
         testnet = False,
         category = "linear",
@@ -110,20 +109,27 @@ def get_live_orders(client, qty_xrp, qty_one):
     iterable = ret_list['result']['list']
     if len(iterable) > 0:
       for order in iterable:
-        if order['side'] == 'Sell':
-          label = -1
-        elif order['side'] == 'Buy':
+        if order['side'] == 'Sell': #Si es Sell en Bybit implica to be Sell -> Por ende es un Long
+          ori_side = 'Buy'
           label = 1
+        elif order['side'] == 'Buy': #Si es Buy en Bybit implica to be Buy -> Por ende es un Short
+          ori_side = 'Sell'
+          label = -1
         else:
           label = 0
+        #Modificar el tiempo a formato estandar
+        utc_transform = datetime.fromtimestamp(int(order['createdTime']) / 1000, tz=pytz.UTC)
+        target_timezone = pytz.timezone('Etc/GMT+5')
+        order_time = utc_transform.astimezone(target_timezone)
         #Si la posición es recuperada los datos de apertura no pueden ser recuperados (No son responsabilidad del programa)
-        pos = Posicion(order['side'],order['symbol'],float(order['qty']),label,order['triggerPrice'],float(order['lastPriceOnCreated']),order['updatedTime'],None,None,None,None,None)
+        pos = Posicion(ori_side,order['symbol'],float(order['qty']),label,order['triggerPrice'],float(order['lastPriceOnCreated']),order_time,None,None,None,None,None)
+        pos.id = order['orderId']
         #Correccion de integridad de los datos para eventos locales (Llegar a halfprice)
         if pos.symbol == 'XRPUSDT':
-          if pos.amount < qty_xrp:
+          if pos.amount <= (int(qty_xrp/2)):
             pos.half_order = True
         elif pos.symbol == 'ONEUSDT':
-          if pos.amount < qty_one:
+          if pos.amount < (int(qty_one/2)):
             pos.half_order = True
 
         result.append(pos)
@@ -252,9 +258,11 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
         #Caso de venta de la orden por stoploss
         if posicion.stop_loss_reached(float(df['High'].iloc[0]), float(df['Low'].iloc[0])):
           log.info(f"Stoploss alcanzado para la orden: {posicion.id}|{posicion.symbol}|{posicion.side}|{posicion.price}")
+          posicion.crear_csv_ordenes(False) #Crear fragmento de data con target false -> siendo que se perdio
           
         #Revision normal de las condiciones de venta (Profit, polaridad distinta y tiempo distinto al de la orden)
         elif(posicion.label != df['Polaridad'].iloc[1] and posicion.is_profit(float(df['Close'].iloc[0])) and posicion.time != df['Time'].iloc[0]):
+          log.info(f"La posición {posicion.id} con simbolo {posicion.symbol} ha cumplido las condiciones para ser cerrada en profit")
           res = posicion.close_order(client, float(df['Close'].iloc[0]))
           if res['retMsg'] == 'OK':
             log.info(f"La posicion [{str(posicion)}] se ha cerrado exitosamente a un precio de {df['Close'].iloc[0]}")
@@ -278,9 +286,17 @@ def Revisar_Arreglo(arr: list, df : pd.DataFrame, client, symb: str):
             else:
               updated_arr.append(posicion)
           else:
-            updated_arr.append(posicion)
+            #Caso en el que el stoploss de la orden este pendiente a resolución
+            if(posicion.stoploss_pending == True):
+              res = posicion.modificar_stoploss(client, posicion.price)
+              if res != None:
+                posicion.stoploss_pending = False #Indicar que el stoploss fue resuelto bajo las reglas de negocio
+              updated_arr.append(posicion)
+            else:
+              updated_arr.append(posicion)
       else:
         updated_arr.append(posicion)
+  log.info(f"El arreglo de ordenes activas contiene {len(updated_arr)}")      
   return updated_arr
 '''
 ###################################################################################
