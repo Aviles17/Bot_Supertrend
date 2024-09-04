@@ -1,13 +1,20 @@
 import unittest
 from pybit.unified_trading import HTTP
 import pandas as pd
+import os
 from scripts.ST_Indicators import Get_Balance
 from scripts.ST_Indicators import get_data
 from scripts.ST_Indicators import CalculateSupertrend
-import config.Credenciales as id
+from dotenv import load_dotenv
 
 
 class TestST_Indicators_Util(unittest.TestCase):
+    def setUp(self):
+        load_dotenv()
+        Api_Key = os.getenv('Api_Key')
+        Api_Secret = os.getenv('Api_Secret')
+        self.client = HTTP(testnet=False, api_key=Api_Key, api_secret=Api_Secret)
+
     '''
     ###################################################################################
     [Proposito]: Prueba para la funcion Get_Balance del archivo ST_Indicators
@@ -15,8 +22,7 @@ class TestST_Indicators_Util(unittest.TestCase):
     ###################################################################################
     '''
     def test_get_balance(self):
-        client = HTTP(testnet=False, api_key=id.Api_Key, api_secret=id.Api_Secret)
-        balance = Get_Balance(client, 'USDT')
+        balance = Get_Balance(self.client, 'USDT')
         self.assertIsInstance(float(balance), float)
         self.assertGreater(float(balance), 0.0)
         
@@ -28,7 +34,7 @@ class TestST_Indicators_Util(unittest.TestCase):
     ###################################################################################
     '''
     def test_get_data(self):
-        df = get_data('ETHUSDT', '15')
+        df = get_data('XRPUSDT', '15')
         self.assertIsInstance(df, pd.core.frame.DataFrame)
         self.assertFalse(df.empty)
         
@@ -40,7 +46,7 @@ class TestST_Indicators_Util(unittest.TestCase):
     ###################################################################################
     '''
     def test_calculate_supertrend(self):
-        df = get_data('ETHUSDT', '15')
+        df = get_data('XRPUSDT', '15')
         df = CalculateSupertrend(df)
         self.assertIsInstance(df, pd.core.frame.DataFrame)
         self.assertFalse(df.empty)
