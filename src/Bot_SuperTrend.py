@@ -16,10 +16,9 @@ def Trading_setup():
     if Api_Key != None and Api_Secret != None:
         client = HTTP(testnet=False, api_key=Api_Key, api_secret=Api_Secret)
         print('Login successful')
-        qty_xrp,qty_one = op.calcular_qty_posicion(client)
-        CANTIDADES = [qty_xrp,qty_one] #Cantidades de monedas a comprar o vender
+        CANTIDADES  = op.calcular_qty_posicion(client, COIN_SUPPORT, COIN_LEVERAGE) #Cantidades de monedas a comprar o vender
         MAX = len(COIN_SUPPORT) - 1
-        posicion_list = op.get_live_orders(client,qty_xrp,qty_one) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
+        posicion_list = op.get_live_orders(client, COIN_SUPPORT, CANTIDADES) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
         Polaridad_l = [0] * len(COIN_SUPPORT)  #Lista donde se van a guardar las polaridades respectivas de cada moneda (Inicialmente [0,0])
         symb_cont = 0 #Contador de symbolos (Determina cual stock observar) (Inicialmente 0)
         while(True):
@@ -45,9 +44,9 @@ def Trading_setup_LLT(ip_server: str, port_server: int):
                 client = HTTP(testnet=False, api_key=Api_Key, api_secret=Api_Secret)
                 print('Login successful')
                 qty_xrp,qty_one = op.calcular_qty_posicion(client)
-                CANTIDADES = [qty_xrp,qty_one] #Cantidades de monedas a comprar o vender
+                CANTIDADES  = op.calcular_qty_posicion(client, COIN_SUPPORT, COIN_LEVERAGE) #Cantidades de monedas a comprar o vender
                 MAX = len(COIN_SUPPORT) - 1
-                posicion_list = op.get_live_orders(client,qty_xrp,qty_one) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
+                posicion_list = op.get_live_orders(client, COIN_SUPPORT, CANTIDADES) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
                 Polaridad_l = [0] * len(COIN_SUPPORT)  #Lista donde se van a guardar las polaridades respectivas de cada moneda (Inicialmente [0,0])
                 symb_cont = 0 #Contador de symbolos (Determina cual stock observar) (Inicialmente 0)
                 while(True):
@@ -83,6 +82,7 @@ if __name__ == '__main__':
     Api_Secret = os.getenv('Api_Secret')
 
     COIN_SUPPORT = ['XRPUSDT','ONEUSDT'] #Monedas en las cuales se ejecutaran operaciones
+    COIN_LEVERAGE = [70,25] #Apalancamiento de cada una de las monedas
     
     #Configure log file
     logger = log.getLogger(__name__)

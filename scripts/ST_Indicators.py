@@ -22,36 +22,30 @@ from websocket._exceptions import WebSocketException
 ####################################################################################
 '''
 # Calcula la cantidad de la moneda que se va a comprar o vender cada vez
-def calcular_qty_posicion(cliente):
+def calcular_qty_posicion(cliente, COIN_SUPPORT: list, COIN_LEVERAGE: list)->list:
     
     # Llamado a la función para retornar el balance actual
     wallet_balance = float(Get_Balance(cliente,"USDT"))
-    
-    # Retorna el precio de la moneda requerida
-    ticker_xrp = cliente.get_tickers(
-        testnet = False,
-        category = "linear",
-        symbol = "XRPUSDT",
-    )
-    mark_price_xrp = float(ticker_xrp['result']['list'][0]['markPrice'])   
-    ticker_one = cliente.get_tickers(
-        testnet = False,
-        category = "linear",
-        symbol = "ONEUSDT",
-    )
-    mark_price_one = float(ticker_one['result']['list'][0]['markPrice'])   
-    
-    # Cantidades de aproximadamente el 2% y 3% de nuestro balance total en 'xrp' y 'one' respectivamente
-    qty_xrp = math.ceil(((wallet_balance*0.02)/mark_price_xrp)*69)
-    qty_one = math.ceil(((wallet_balance*0.03)/mark_price_one)*25)
-    
-    if(qty_xrp <= 1):
-        qty_xrp = 2*qty_xrp
-        
-    if(qty_one <= 1):
-        qty_one = 2*qty_one
+    qty = []
 
-    return (qty_xrp, qty_one)
+    for i, coin in enumerate(COIN_SUPPORT):
+      ticker_info = cliente.get_tickers(
+        testnet = False,
+        category = "linear",
+        symbol = coin,
+      )
+      mark_price = float(ticker_info['result']['list'][0]['markPrice'])   
+    
+      # Cantidades de aproximadamente el 2% y 3% de nuestro balance total en 'xrp' y 'one' respectivamente
+      qty_coin = math.ceil(((wallet_balance*0.02)/mark_price)*COIN_LEVERAGE[i])
+    
+      if(qty_coin <= 1):
+        qty_coin = 2*qty_coin
+      
+      qty.append(qty_coin)
+    
+
+    return qty
 
     
 '''
@@ -88,7 +82,7 @@ def Get_Balance(cliente,symbol: str):
 [Retorno]: Lista con los objetos Posicion creados
 ###################################################################################
 '''
-def get_live_orders(client, qty_xrp, qty_one):
+def get_live_orders(client, COIN_SUPPORT:list, CANTIDADES:list):
   ret_list = None
   try:
     while(True):
@@ -124,13 +118,10 @@ def get_live_orders(client, qty_xrp, qty_one):
         #Si la posición es recuperada los datos de apertura no pueden ser recuperados (No son responsabilidad del programa)
         pos = Posicion(ori_side,order['symbol'],float(order['qty']),label,order['triggerPrice'],float(order['lastPriceOnCreated']),order_time,None,None,None,None,None)
         pos.id = order['orderId']
+
         #Correccion de integridad de los datos para eventos locales (Llegar a halfprice)
-        if pos.symbol == 'XRPUSDT':
-          if pos.amount <= (int(qty_xrp/2)):
-            pos.half_order = True
-        elif pos.symbol == 'ONEUSDT':
-          if pos.amount < (int(qty_one/2)):
-            pos.half_order = True
+        if pos.amount <= int(CANTIDADES[COIN_SUPPORT.index(pos.symbol)]):
+          pos.half_order = True
 
         result.append(pos)
     return result
