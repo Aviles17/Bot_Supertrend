@@ -43,7 +43,6 @@ def Trading_setup_LLT(ip_server: str, port_server: int):
             if Api_Key != None and Api_Secret != None:
                 client = HTTP(testnet=False, api_key=Api_Key, api_secret=Api_Secret)
                 print('Login successful')
-                qty_xrp,qty_one = op.calcular_qty_posicion(client)
                 CANTIDADES  = op.calcular_qty_posicion(client, COIN_SUPPORT, COIN_LEVERAGE) #Cantidades de monedas a comprar o vender
                 MAX = len(COIN_SUPPORT) - 1
                 posicion_list = op.get_live_orders(client, COIN_SUPPORT, CANTIDADES) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
