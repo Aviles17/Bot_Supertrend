@@ -78,7 +78,7 @@ void restart_python_bot(){
         system("nohup python3 src/Bot_SuperTrend.py > output.log &");
     }
     else{
-        cout << "No se encontro una version de python con la cual reiniciar el sistema"
+        cout << "No se encontro una version de python con la cual reiniciar el sistema" << endl;
         exit(0);
     }
 }
