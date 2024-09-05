@@ -22,36 +22,30 @@ from websocket._exceptions import WebSocketException
 ####################################################################################
 '''
 # Calcula la cantidad de la moneda que se va a comprar o vender cada vez
-def calcular_qty_posicion(cliente):
+def calcular_qty_posicion(cliente, COIN_SUPPORT: list, COIN_LEVERAGE: list)->list:
     
     # Llamado a la función para retornar el balance actual
     wallet_balance = float(Get_Balance(cliente,"USDT"))
-    
-    # Retorna el precio de la moneda requerida
-    ticker_xrp = cliente.get_tickers(
-        testnet = False,
-        category = "linear",
-        symbol = "XRPUSDT",
-    )
-    mark_price_xrp = float(ticker_xrp['result']['list'][0]['markPrice'])   
-    ticker_one = cliente.get_tickers(
-        testnet = False,
-        category = "linear",
-        symbol = "ONEUSDT",
-    )
-    mark_price_one = float(ticker_one['result']['list'][0]['markPrice'])   
-    
-    # Cantidades de aproximadamente el 2% y 3% de nuestro balance total en 'xrp' y 'one' respectivamente
-    qty_xrp = math.ceil(((wallet_balance*0.02)/mark_price_xrp)*69)
-    qty_one = math.ceil(((wallet_balance*0.03)/mark_price_one)*25)
-    
-    if(qty_xrp <= 1):
-        qty_xrp = 2*qty_xrp
-        
-    if(qty_one <= 1):
-        qty_one = 2*qty_one
+    qty = []
 
-    return (qty_xrp, qty_one)
+    for i, coin in enumerate(COIN_SUPPORT):
+      ticker_info = cliente.get_tickers(
+        testnet = False,
+        category = "linear",
+        symbol = coin,
+      )
+      mark_price = float(ticker_info['result']['list'][0]['markPrice'])   
+    
+      # Cantidades de aproximadamente el 2% y 3% de nuestro balance total en 'xrp' y 'one' respectivamente
+      qty_coin = math.ceil(((wallet_balance*0.02)/mark_price)*COIN_LEVERAGE[i])
+    
+      if(qty_coin <= 1):
+        qty_coin = 2*qty_coin
+      
+      qty.append(qty_coin)
+    
+
+    return qty
 
     
 '''
@@ -88,7 +82,7 @@ def Get_Balance(cliente,symbol: str):
 [Retorno]: Lista con los objetos Posicion creados
 ###################################################################################
 '''
-def get_live_orders(client, qty_xrp, qty_one):
+def get_live_orders(client, COIN_SUPPORT:list, CANTIDADES:list):
   ret_list = None
   try:
     while(True):
@@ -124,13 +118,10 @@ def get_live_orders(client, qty_xrp, qty_one):
         #Si la posición es recuperada los datos de apertura no pueden ser recuperados (No son responsabilidad del programa)
         pos = Posicion(ori_side,order['symbol'],float(order['qty']),label,order['triggerPrice'],float(order['lastPriceOnCreated']),order_time,None,None,None,None,None)
         pos.id = order['orderId']
+
         #Correccion de integridad de los datos para eventos locales (Llegar a halfprice)
-        if pos.symbol == 'XRPUSDT':
-          if pos.amount <= (int(qty_xrp/2)):
-            pos.half_order = True
-        elif pos.symbol == 'ONEUSDT':
-          if pos.amount < (int(qty_one/2)):
-            pos.half_order = True
+        if pos.amount <= int(CANTIDADES[COIN_SUPPORT.index(pos.symbol)]):
+          pos.half_order = True
 
         result.append(pos)
     return result
@@ -148,47 +139,67 @@ def get_live_orders(client, qty_xrp, qty_one):
 [Retorno]: Dataframe de pandas con la informacion solicitada
 ###################################################################################
 '''
-def get_data(symbol: str,interval: str,unixtimeinterval: int = 1800000):
+def get_data(symbol: str,interval: str):
+    list_registers = []
+    unix_endtime = None
+    for i in range(0,3):
+        if i == 0: #Primer llamado: Historial de mercado con tiempo actual
+            url = 'http://api.bybit.com/v5/market/kline?symbol='+symbol+'&interval='+interval+'&limit='+str(1000)
+            while(True):
+                try:
+                    data = requests.get(url).json()
+                    unix_endtime = data['result']["list"][-1][0]
+                    break
+                except requests.exceptions.ConnectionError as e:
+                    print(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
+                    time.sleep(10)
+                except requests.RequestException as e:
+                    print(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
+                    time.sleep(10)
+                except Exception as e:
+                    print(f"An error occurred: {e}, Retrying in 10 seconds...\n")
+                    time.sleep(10)
+        if i == 1 and unix_endtime != None:
+            url = 'http://api.bybit.com/v5/market/kline?symbol='+symbol+'&interval='+interval+'&limit='+str(1000)+'&end='+str(unix_endtime)
+            while(True):
+                try:
+                    data = requests.get(url).json()
+                    unix_endtime = data['result']["list"][-1][0]
+                    break
+                except requests.exceptions.ConnectionError as e:
+                    print(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
+                    time.sleep(10)
+                except requests.RequestException as e:
+                    print(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
+                    time.sleep(10)
+        if i == 2 and unix_endtime != None:
+            url = 'http://api.bybit.com/v5/market/kline?symbol='+symbol+'&interval='+interval+'&limit='+str(200)+'&end='+str(unix_endtime)
+            while(True):
+                try:
+                    data = requests.get(url).json()
+                    break
+                except requests.exceptions.ConnectionError as e:
+                    print(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
+                    time.sleep(10)
+                except requests.RequestException as e:
+                    print(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
+                    time.sleep(10)
+        #Crear proto dataframe y añadir a lista
+        df = pd.DataFrame(data['result']["list"], columns=['Time','Open','High','Low','Close','Volume', 'Turnover'])
+        df['Time'] = pd.to_numeric(df['Time'])
+        df = df.drop_duplicates()
+        df['Time'] = df['Time'].apply(lambda x: datetime.fromtimestamp(x / 1000, tz=pytz.UTC))
+        target_timezone = pytz.timezone('Etc/GMT+5')
+        df['Time'] = df['Time'].apply(lambda x: x.astimezone(target_timezone))
+        df = df.drop(columns=['Turnover'])
+        list_registers.append(df)
 
-  list_registers = []
-  DATA_200 = 180000
-  now = datetime.now()
-  unixtime = int(time.mktime(now.timetuple()))
-  since = unixtime
-  while(unixtimeinterval != 0):
-    start= str(since - unixtimeinterval)
-    url = 'http://api.bybit.com/v5/market/kline?symbol='+symbol+'&interval='+interval+'&from='+str(start)
-    while(True):
-      try:
-        data = requests.get(url).json()
-        if data["retMsg"] == "OK":
-          df = pd.DataFrame(data['result']["list"], columns=['Time','Open','High','Low','Close','Volume', 'Turnover'])
-          break
-        else:
-          raise Exception(f"Error general en la solicitud de datos {data}")
-      except requests.exceptions.ConnectionError as e:
-        log.error(f"Connection error occurred: {e}, Retrying in 10 seconds...\n")
-        time.sleep(10)
-      except requests.RequestException as e:
-        log.error(f"Error occurred: {e}, Retrying in 10 seconds...\n")
-        time.sleep(10)
-      except Exception as e:
-        log.error(f"Error occurred: {e}, Retrying in 10 seconds...\n")
-        time.sleep(10)
-    df['Time'] = pd.to_numeric(df['Time'])
-    df = df.drop_duplicates()
-    df['Time'] = df['Time'].apply(lambda x: datetime.fromtimestamp(x / 1000, tz=pytz.UTC))
-    target_timezone = pytz.timezone('Etc/GMT+5')
-    df['Time'] = df['Time'].apply(lambda x: x.astimezone(target_timezone))
-    df = df.drop(columns=['Turnover'])
-    list_registers.append(df)
-    unixtimeinterval = unixtimeinterval - DATA_200
-    
-  concatenated_df = pd.concat([list_registers[0], list_registers[1], list_registers[2], list_registers[3], list_registers[4], list_registers[5], list_registers[6], list_registers[7], list_registers[8], list_registers[9]], axis=0)
-  concatenated_df = concatenated_df.reset_index(drop=True)
-  float_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
-  concatenated_df[float_columns] = concatenated_df[float_columns].astype(float)
-  return concatenated_df
+    concatenated_df = pd.concat([list_registers[0], list_registers[1], list_registers[2]], axis=0)
+    concatenated_df = concatenated_df.reset_index(drop=True)
+    float_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+    concatenated_df[float_columns] = concatenated_df[float_columns].astype(float)
+    concatenated_df = concatenated_df.drop_duplicates()
+    return concatenated_df
 
     
 '''

@@ -7,4 +7,4 @@ g++ scripts/Heartbeat_server.cpp -o Heartbeat_server
 ./Heartbeat_server &
 
 # Ejecutar el script Bot_SUpertrend en segundo plano como cliente
-nohup python src/Bot_SuperTrend.py > output.log &
+nohup python3 src/Bot_SuperTrend.py > output.log &
