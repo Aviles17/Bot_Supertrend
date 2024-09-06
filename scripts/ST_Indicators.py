@@ -443,7 +443,7 @@ def CalculateSupertrend(data: pd.DataFrame):
 
     df_merge = pd.merge(data, Temp_Trend, left_index=True, right_index=True)
 
-    df_merge_ma_final = update_df(df_merge)
+    df_merge_ma_final = update_df(df_merge) # Actualizar el dataframe con las medias moviles (EMA , DEMA)
 
     return df_merge_ma_final
 
