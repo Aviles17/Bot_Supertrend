@@ -36,11 +36,16 @@ def calcular_qty_posicion(cliente, COIN_SUPPORT: list, COIN_LEVERAGE: list)->lis
       )
       mark_price = float(ticker_info['result']['list'][0]['markPrice'])   
     
-      # Cantidades de aproximadamente el 2% y 3% de nuestro balance total en 'xrp' y 'one' respectivamente
+      # Cantidades de aproximadamente el 2% y 3% de nuestro balance total
       qty_coin = math.ceil(((wallet_balance*0.02)/mark_price)*COIN_LEVERAGE[i])
+      print(qty_coin)
     
       if(qty_coin <= 1):
         qty_coin = 2*qty_coin
+
+      #Aplicar Null safty para evitar errores en la ejecución de ordenes (Condición > 5 USDT)
+      if (qty_coin * mark_price) < 5:
+        qty_coin = int(round((5/mark_price),0))
       
       qty.append(qty_coin)
     
