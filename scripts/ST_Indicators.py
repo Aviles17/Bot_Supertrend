@@ -41,8 +41,7 @@ def calcular_qty_posicion(cliente, COIN_SUPPORT: list, COIN_LEVERAGE: list) -> l
         # Cantidades de aproximadamente el 2% y 3% de nuestro balance total
         qty_coin = math.ceil(
             ((wallet_balance*0.02)/mark_price)*COIN_LEVERAGE[i])
-        print(qty_coin)
-
+        
         if (qty_coin <= 1):
             qty_coin = 2*qty_coin
 
