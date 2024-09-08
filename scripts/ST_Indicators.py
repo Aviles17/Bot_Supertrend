@@ -46,8 +46,8 @@ def calcular_qty_posicion(cliente, COIN_SUPPORT: list, COIN_LEVERAGE: list) -> l
             qty_coin = 2*qty_coin
 
         # Aplicar Null safty para evitar errores en la ejecución de ordenes (Condición > 5 USDT)
-        if (qty_coin * mark_price) < 5:
-            qty_coin = int(round((5/mark_price), 0))
+        if (qty_coin * mark_price) < 6:
+            qty_coin = int(round((6/mark_price), 0))
 
         qty.append(qty_coin)
 
