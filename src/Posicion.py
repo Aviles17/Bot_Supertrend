@@ -367,4 +367,4 @@ class Posicion:
             writer = csv.writer(csvfile)
             if not fileexist:
                 writer.writerow(headers)
-            writer.writerow([self.id,self.time,self.symbol,self.open,self.high,self.price,self.volume,self.supertrend,self.side,self.dema800,self.half_order,profit])
+            writer.writerow([self.id,self.time,self.symbol,self.open,self.low,self.high,self.price,self.volume,self.supertrend,self.side,self.dema800,self.half_order,profit])
