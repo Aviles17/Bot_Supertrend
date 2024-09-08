@@ -46,8 +46,8 @@ def calcular_qty_posicion(cliente, COIN_SUPPORT: list, COIN_LEVERAGE: list) -> l
             qty_coin = 2*qty_coin
 
         # Aplicar Null safty para evitar errores en la ejecución de ordenes (Condición > 5 USDT)
-        if (qty_coin * mark_price) < 5:
-            qty_coin = int(round((5/mark_price), 0))
+        if (qty_coin * mark_price) < 6:
+            qty_coin = int(round((6/mark_price), 0))
 
         qty.append(qty_coin)
 
@@ -97,7 +97,7 @@ def Get_Balance(cliente, symbol: str):
 '''
 
 
-def get_live_orders(client, COIN_SUPPORT: list, CANTIDADES: list):
+def get_live_orders(client, COIN_SUPPORT: list, CANTIDADES: list, Polaridad_l: list):
     ret_list = None
     try:
         while (True):
@@ -125,10 +125,12 @@ def get_live_orders(client, COIN_SUPPORT: list, CANTIDADES: list):
                 if order['side'] == 'Sell':
                     ori_side = 'Buy'
                     label = 1
+                    Polaridad_l[COIN_SUPPORT.index(order['symbol'])] = label
                 # Si es Buy en Bybit implica to be Buy -> Por ende es un Short
                 elif order['side'] == 'Buy':
                     ori_side = 'Sell'
                     label = -1
+                    Polaridad_l[COIN_SUPPORT.index(order['symbol'])] = label
                 else:
                     label = 0
                 # Modificar el tiempo a formato estandar
@@ -146,7 +148,7 @@ def get_live_orders(client, COIN_SUPPORT: list, CANTIDADES: list):
                     pos.half_order = True
 
                 result.append(pos)
-        return result
+        return result, Polaridad_l
 
     else:
         return None
