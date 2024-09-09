@@ -18,8 +18,8 @@ def Trading_setup():
         print('Login successful')
         CANTIDADES  = op.calcular_qty_posicion(client, COIN_SUPPORT, COIN_LEVERAGE) #Cantidades de monedas a comprar o vender
         MAX = len(COIN_SUPPORT) - 1
-        posicion_list = op.get_live_orders(client, COIN_SUPPORT, CANTIDADES) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
         Polaridad_l = [0] * len(COIN_SUPPORT)  #Lista donde se van a guardar las polaridades respectivas de cada moneda (Inicialmente [0,0])
+        posicion_list, Polaridad_l = op.get_live_orders(client, COIN_SUPPORT, CANTIDADES, Polaridad_l) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
         symb_cont = 0 #Contador de symbolos (Determina cual stock observar) (Inicialmente 0)
         while(True):
             print(f"CPU Usage: {psutil.cpu_percent(interval=1)}% | RAM Usage: {psutil.virtual_memory()[2]}% | Disk Usage: {psutil.disk_usage('/')[3]}%")
@@ -45,8 +45,8 @@ def Trading_setup_LLT(ip_server: str, port_server: int):
                 print('Login successful')
                 CANTIDADES  = op.calcular_qty_posicion(client, COIN_SUPPORT, COIN_LEVERAGE) #Cantidades de monedas a comprar o vender
                 MAX = len(COIN_SUPPORT) - 1
-                posicion_list = op.get_live_orders(client, COIN_SUPPORT, CANTIDADES) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
                 Polaridad_l = [0] * len(COIN_SUPPORT)  #Lista donde se van a guardar las polaridades respectivas de cada moneda (Inicialmente [0,0])
+                posicion_list, Polaridad_l = op.get_live_orders(client, COIN_SUPPORT, CANTIDADES, Polaridad_l) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
                 symb_cont = 0 #Contador de symbolos (Determina cual stock observar) (Inicialmente 0)
                 while(True):
                     print(f"CPU Usage: {psutil.cpu_percent(interval=1)}% | RAM Usage: {psutil.virtual_memory()[2]}% | Disk Usage: {psutil.disk_usage('/')[3]}%")

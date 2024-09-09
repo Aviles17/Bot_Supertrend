@@ -63,10 +63,16 @@ void restart_python_bot(){
     filesystem::path OutputPath = "output_backup.log";
     //Antes de reiniciar es necesario guardar una copia de los logs del bot (Para saber que salio mal)
     if(!filesystem::exists(TradingPath)){
-        system("cp Trading.log Trading_backup.log");
+        system("cp Trading.log Ori_Trading_backup.log"); //Copia de seguridad del error original
+    }
+    else{
+        system("cp Trading.log New_Trading_backup.log"); //Copia de seguridad del error nuevo subsequente
     }
     if(!filesystem::exists(OutputPath)){
-        system("cp output.log output_backup.log");
+        system("cp output.log Ori_output_backup.log"); //Copia de seguridad del error original en output
+    }
+    else{
+        system("cp output.log New_output_backup.log"); //Copia de seguridad del error nuevo subsequente en output
     }
 
     if(system("which python > /dev/null 2>&1") == 0){
