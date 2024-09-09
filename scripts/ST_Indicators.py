@@ -40,8 +40,8 @@ def calcular_qty_posicion(cliente, COIN_SUPPORT: list, COIN_LEVERAGE: list) -> l
 
         # Cantidades de aproximadamente el 2% y 3% de nuestro balance total
         qty_coin = math.ceil(
-            ((wallet_balance*0.02)/mark_price)*COIN_LEVERAGE[i])
-        
+            ((wallet_balance*0.02)*COIN_LEVERAGE[i])/mark_price)
+
         if (qty_coin <= 1):
             qty_coin = 2*qty_coin
 
@@ -444,7 +444,8 @@ def CalculateSupertrend(data: pd.DataFrame):
 
     df_merge = pd.merge(data, Temp_Trend, left_index=True, right_index=True)
 
-    df_merge_ma_final = update_df(df_merge) # Actualizar el dataframe con las medias moviles (EMA , DEMA)
+    # Actualizar el dataframe con las medias moviles (EMA , DEMA)
+    df_merge_ma_final = update_df(df_merge)
 
     return df_merge_ma_final
 
