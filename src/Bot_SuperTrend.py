@@ -81,7 +81,7 @@ if __name__ == '__main__':
     Api_Secret = os.getenv('Api_Secret')
 
     COIN_SUPPORT = ['XRPUSDT','ONEUSDT', 'DOTUSDT'] #Monedas en las cuales se ejecutaran operaciones
-    COIN_LEVERAGE = [70,25,10] #Apalancamiento de cada una de las monedas
+    COIN_LEVERAGE = [70,25,40] #Apalancamiento de cada una de las monedas
     
     #Configure log file
     logger = log.getLogger(__name__)
