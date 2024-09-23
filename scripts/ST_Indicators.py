@@ -429,7 +429,7 @@ def update_df(data: pd.DataFrame, test_length: int = 800):
 """
 
 
-def CalculateSupertrend(data: pd.DataFrame):
+def CalculateSupertrend(data: pd.DataFrame, mult: int):
 
     reversed_df = data.iloc[::-1]
     Temp_Trend = ta.supertrend(
@@ -437,16 +437,17 @@ def CalculateSupertrend(data: pd.DataFrame):
         low=reversed_df['Low'],
         close=reversed_df['Close'],
         period=10,
-        multiplier=2)
+        multiplier=mult)
+    
+    ATR = ta.atr(high=reversed_df['High'], low=reversed_df['Low'], close=reversed_df['Close'], length=14)
 
-    Temp_Trend = Temp_Trend.rename(columns={'SUPERT_7_2.0': 'Supertrend', 'SUPERTd_7_2.0': 'Polaridad',
-                                   'SUPERTl_7_2.0': 'ST_Inferior', 'SUPERTs_7_2.0': 'ST_Superior'})
+    Temp_Trend = Temp_Trend.rename(columns={f'SUPERT_7_{mult}.0': 'Supertrend', f'SUPERTd_7_{mult}.0': 'Polaridad',
+                                   f'SUPERTl_7_{mult}.0': 'ST_Inferior', f'SUPERTs_7_{mult}.0': 'ST_Superior'})
 
     df_merge = pd.merge(data, Temp_Trend, left_index=True, right_index=True)
+    df_merge = pd.merge(df_merge, ATR, left_index=True, right_index=True)
 
-    # Actualizar el dataframe con las medias moviles (EMA , DEMA)
-    df_merge_ma_final = update_df(df_merge)
-
+    df_merge_ma_final = update_df(df_merge) # Actualizar el dataframe con las medias moviles (EMA , DEMA)
     return df_merge_ma_final
 
 
@@ -583,7 +584,7 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
     symb, symb_cont, cantidad = get_symb(
         symb_cont, symb_list, MAX_CURRENCY, cantidades_simetricas)
     df = get_data(symb, interval)
-    df = CalculateSupertrend(df)
+    df = CalculateSupertrend(df, 3) # Calcular el indicador de SuperTrend con multiplicador 3
     posicion_list = Revisar_Arreglo(posicion_list, df, client, symb)
     if (Polaridad_l[symb_cont] != df['Polaridad'].iloc[1]):
         log.info(

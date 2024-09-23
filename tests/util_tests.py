@@ -36,7 +36,7 @@ class TestST_Indicators_Util(unittest.TestCase):
     '''
 
     def test_get_data(self):
-        df = get_data('XRPUSDT', '15')
+        df = get_data('XRPUSDT', '30')
         self.assertIsInstance(df, pd.core.frame.DataFrame)
         self.assertFalse(df.empty)
 
@@ -48,8 +48,8 @@ class TestST_Indicators_Util(unittest.TestCase):
     '''
 
     def test_calculate_supertrend(self):
-        df = get_data('XRPUSDT', '15')
-        df = CalculateSupertrend(df)
+        df = get_data('XRPUSDT', '30')
+        df = CalculateSupertrend(df, 3)
         self.assertIsInstance(df, pd.core.frame.DataFrame)
         self.assertFalse(df.empty)
         self.assertIn('Supertrend', df.columns)
