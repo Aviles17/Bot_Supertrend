@@ -25,7 +25,7 @@ def Trading_setup():
             print(f"CPU Usage: {psutil.cpu_percent(interval=1)}% | RAM Usage: {psutil.virtual_memory()[2]}% | Disk Usage: {psutil.disk_usage('/')[3]}%")
             for i in range(len(COIN_SUPPORT)): 
                 log.info(f"Entro al bucle de monedas: {COIN_SUPPORT[i]}")
-                posicion_list, Polaridad_l, symb_cont = op.Trading_logic(client,COIN_SUPPORT,'15', MAX, CANTIDADES, Polaridad_l, posicion_list, symb_cont)
+                posicion_list, Polaridad_l, symb_cont = op.Trading_logic(client,COIN_SUPPORT,'30', MAX, CANTIDADES, Polaridad_l, posicion_list, symb_cont)
             time.sleep(30) #Espera 30 segundos por ciclo
     else:
         log.error('No se han ingresado las credenciales')
@@ -52,7 +52,7 @@ def Trading_setup_LLT(ip_server: str, port_server: int):
                     print(f"CPU Usage: {psutil.cpu_percent(interval=1)}% | RAM Usage: {psutil.virtual_memory()[2]}% | Disk Usage: {psutil.disk_usage('/')[3]}%")
                     for i in range(len(COIN_SUPPORT)): 
                         log.info(f"Entro al bucle de monedas: {COIN_SUPPORT[i]}")
-                        posicion_list, Polaridad_l, symb_cont = op.Trading_logic(client,COIN_SUPPORT,'15', MAX, CANTIDADES, Polaridad_l, posicion_list, symb_cont)
+                        posicion_list, Polaridad_l, symb_cont = op.Trading_logic(client,COIN_SUPPORT,'30', MAX, CANTIDADES, Polaridad_l, posicion_list, symb_cont)
                     s.sendall("Alive".encode('utf-8')) #Enviando Heartbeat
                     time.sleep(30) #Espera 30 segundos por ciclo
             else:
