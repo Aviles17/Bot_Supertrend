@@ -5,9 +5,7 @@ import time
 import pandas_ta as ta
 import math
 import pytz
-import os
 import logging as log
-import json
 from datetime import datetime
 from src.Posicion import Posicion
 from requests.exceptions import RequestException
@@ -24,32 +22,31 @@ from websocket._exceptions import WebSocketException
 # Calcula la cantidad de la moneda que se va a comprar o vender cada vez
 
 
-def calcular_qty_posicion(cliente, COIN_SUPPORT: list, COIN_LEVERAGE: list) -> list:
+def calcular_qty_posicion(cliente, COIN_SYMBOL: str, entry: float, stoploss:float, risk:float = 0.02) -> list:
 
     # Llamado a la función para retornar el balance actual
     wallet_balance = float(Get_Balance(cliente, "USDT"))
-    qty = []
 
-    for i, coin in enumerate(COIN_SUPPORT):
-        ticker_info = cliente.get_tickers(
-            testnet=False,
-            category="linear",
-            symbol=coin,
-        )
-        mark_price = float(ticker_info['result']['list'][0]['markPrice'])
+    ticker_info = cliente.get_tickers(
+        testnet=False,
+        category="linear",
+        symbol=COIN_SYMBOL,
+    )
+    mark_price = float(ticker_info['result']['list'][0]['markPrice'])
 
-        # Cantidades de aproximadamente el 2% y 3% de nuestro balance total
-        qty_coin = math.ceil(
-            ((wallet_balance*0.02)*COIN_LEVERAGE[i])/mark_price)
+    stop_loss_proportion = abs((entry - stoploss) / entry)
+    order_size = (wallet_balance * risk) / stop_loss_proportion
+    if (order_size / mark_price) < 1:
+        factor = 10 ** 2
+        qty = math.floor(order_size * factor) / factor
+    else:
+        qty = math.floor(order_size / mark_price)
 
-        if (qty_coin <= 1):
-            qty_coin = 2*qty_coin
-
-        # Aplicar Null safty para evitar errores en la ejecución de ordenes (Condición > 5 USDT)
-        if (qty_coin * mark_price) < 6:
-            qty_coin = int(round((6/mark_price), 0))
-
-        qty.append(qty_coin)
+    # Aplicar Null safty para evitar errores en la ejecución de ordenes (Condición > 5 USDT)
+    if order_size <= 5:
+        qty = int(round((6/mark_price), 0))
+    if (wallet_balance - order_size) <= 0:
+        qty = None
 
     return qty
 
@@ -97,7 +94,7 @@ def Get_Balance(cliente, symbol: str):
 '''
 
 
-def get_live_orders(client, COIN_SUPPORT: list, CANTIDADES: list, Polaridad_l: list):
+def get_live_orders(client, COIN_SUPPORT: list, Polaridad_l: list):
     ret_list = None
     try:
         while (True):
@@ -144,7 +141,7 @@ def get_live_orders(client, COIN_SUPPORT: list, CANTIDADES: list, Polaridad_l: l
                 pos.id = order['orderId']
 
                 # Correccion de integridad de los datos para eventos locales (Llegar a halfprice)
-                if pos.amount <= int(CANTIDADES[COIN_SUPPORT.index(pos.symbol)]):
+                if float(pos.price) <= float(pos.stoploss) or int(order['createdTime']) < int(order['updatedTime']):
                     pos.half_order = True
 
                 result.append(pos)
@@ -429,23 +426,20 @@ def update_df(data: pd.DataFrame, test_length: int = 800):
 """
 
 
-def CalculateSupertrend(data: pd.DataFrame, mult: int):
+def CalculateSupertrend(data: pd.DataFrame, mult: float, periodo: int):
 
     reversed_df = data.iloc[::-1]
     Temp_Trend = ta.supertrend(
         high=reversed_df['High'],
         low=reversed_df['Low'],
         close=reversed_df['Close'],
-        period=10,
+        period=periodo,
         multiplier=mult)
-    
-    ATR = ta.atr(high=reversed_df['High'], low=reversed_df['Low'], close=reversed_df['Close'], length=14)
 
-    Temp_Trend = Temp_Trend.rename(columns={f'SUPERT_7_{mult}.0': 'Supertrend', f'SUPERTd_7_{mult}.0': 'Polaridad',
-                                   f'SUPERTl_7_{mult}.0': 'ST_Inferior', f'SUPERTs_7_{mult}.0': 'ST_Superior'})
+    Temp_Trend = Temp_Trend.rename(columns={f'SUPERT_7_{mult}': 'Supertrend', f'SUPERTd_7_{mult}': 'Polaridad',
+                                   f'SUPERTl_7_{mult}': 'ST_Inferior', f'SUPERTs_7_{mult}': 'ST_Superior'})
 
     df_merge = pd.merge(data, Temp_Trend, left_index=True, right_index=True)
-    df_merge = pd.merge(df_merge, ATR, left_index=True, right_index=True)
 
     df_merge_ma_final = update_df(df_merge) # Actualizar el dataframe con las medias moviles (EMA , DEMA)
     return df_merge_ma_final
@@ -554,14 +548,13 @@ def Polaridad_Manage(Polaridad: int, df: pd.DataFrame):
 '''
 
 
-def get_symb(cont: int, symb_list: list, MAX_CURRENCY: int, cantidades_simetricas: list):
+def get_symb(cont: int, symb_list: list, MAX_CURRENCY: int):
     symb = symb_list[cont]
-    cantidades = cantidades_simetricas[cont]
     if (cont == MAX_CURRENCY):
-        return symb, 0, cantidades
+        return symb, 0
     else:
         cont += 1
-        return symb, cont, cantidades
+        return symb, cont
 
 
 '''
@@ -580,11 +573,10 @@ def get_symb(cont: int, symb_list: list, MAX_CURRENCY: int, cantidades_simetrica
 '''
 
 
-def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, cantidades_simetricas: list, Polaridad_l: list, posicion_list: list, symb_cont: int):
-    symb, symb_cont, cantidad = get_symb(
-        symb_cont, symb_list, MAX_CURRENCY, cantidades_simetricas)
+def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, Polaridad_l: list, posicion_list: list, symb_cont: int):
+    symb, symb_cont = get_symb(symb_cont, symb_list, MAX_CURRENCY)
     df = get_data(symb, interval)
-    df = CalculateSupertrend(df, 3) # Calcular el indicador de SuperTrend con multiplicador 3
+    df = CalculateSupertrend(df, 3.215,12) # Calcular el indicador de SuperTrend con multiplicador 3-215 y periodo 12
     posicion_list = Revisar_Arreglo(posicion_list, df, client, symb)
     if (Polaridad_l[symb_cont] != df['Polaridad'].iloc[1]):
         log.info(
@@ -598,6 +590,11 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
             if (df['Close'].iloc[1] >= df['DEMA800'].iloc[1]):
                 log.info(
                     f"El valor del close del stock {symb} es mayor al DEMA800 ({df['Close'].iloc[1]} > {df['DEMA800'].iloc[1]})[Tercer Tier]")
+                cantidad = calcular_qty_posicion(client, symb, float(df['Close'].iloc[0]), float(df['Supertrend'].iloc[0]))
+                if cantidad == None:
+                    log.info(
+                        f"El balance de la cuenta es insuficiente para comprar {symb} [Quinto Tier]")
+                    return posicion_list, Polaridad_l, symb_cont
                 order = Posicion('Buy', symb, cantidad, df['Polaridad'].iloc[1], str(round(float(df['Supertrend'].iloc[0]), 4)), float(df['Close'].iloc[0]), str(
                     df['Time'].iloc[0]), float(df['Open'].iloc[0]), float(df['High'].iloc[0]), float(df['Low'].iloc[0]), float(df['Volume'].iloc[0]), float(df['DEMA800'].iloc[0]))
                 res = order.make_order(client)
@@ -616,6 +613,11 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, can
             if (df['Close'].iloc[1] <= df['DEMA800'].iloc[1]):
                 log.info(
                     f"El valor del close del stock {symb} es menor al DEMA800 ({df['Close'].iloc[1]} < {df['DEMA800'].iloc[1]})[Tercer Tier]")
+                cantidad = calcular_qty_posicion(client, symb, float(df['Close'].iloc[0]), float(df['Supertrend'].iloc[0]))
+                if cantidad == None:
+                    log.info(
+                        f"El balance de la cuenta es insuficiente para comprar {symb} [Quinto Tier]")
+                    return posicion_list, Polaridad_l, symb_cont
                 order = Posicion('Sell', symb, cantidad, df['Polaridad'].iloc[1], str(round(float(df['Supertrend'].iloc[0]), 4)), float(df['Close'].iloc[0]), str(
                     df['Time'].iloc[0]), float(df['Open'].iloc[0]), float(df['High'].iloc[0]), float(df['Low'].iloc[0]), float(df['Volume'].iloc[0]), float(df['DEMA800'].iloc[0]))
                 res = order.make_order(client)
