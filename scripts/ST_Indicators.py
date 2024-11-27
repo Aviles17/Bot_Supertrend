@@ -38,7 +38,7 @@ def calcular_qty_posicion(cliente, COIN_SYMBOL: str, entry: float, stoploss:floa
     order_size = (wallet_balance * risk) / stop_loss_proportion
     if (order_size / mark_price) < 1:
         factor = 10 ** 2
-        qty = math.floor(order_size * factor) / factor
+        qty = math.floor((order_size / mark_price) * factor) / factor
     else:
         qty = math.floor(order_size / mark_price)
 
