@@ -19,9 +19,8 @@ from websocket._exceptions import WebSocketException
 [Retorna]: Retorna las cantidades de cada moneda que deben comprarse para seguir con nuestro modelo de 2% de riesgo.
 ####################################################################################
 '''
+
 # Calcula la cantidad de la moneda que se va a comprar o vender cada vez
-
-
 def calcular_qty_posicion(cliente, COIN_SYMBOL: str, entry: float, stoploss:float, risk:float = 0.02) -> list:
 
     # Llamado a la función para retornar el balance actual
@@ -35,19 +34,23 @@ def calcular_qty_posicion(cliente, COIN_SYMBOL: str, entry: float, stoploss:floa
     mark_price = float(ticker_info['result']['list'][0]['markPrice'])
 
     stop_loss_proportion = abs((entry - stoploss) / entry)
-    order_size = (wallet_balance * risk) / stop_loss_proportion
-    if (order_size / mark_price) < 1:
-        factor = 10 ** 2
-        qty = math.floor((order_size / mark_price) * factor) / factor
+    value = (wallet_balance * risk) / stop_loss_proportion
+    cost = value / 15
+    
+    if (value / mark_price) < 1:
+        qty = round((value / mark_price), 2)
     else:
-        qty = math.floor(order_size / mark_price)
-
+        qty = math.floor(value / mark_price)
+    
     # Aplicar Null safty para evitar errores en la ejecución de ordenes (Condición > 5 USDT)
-    if order_size <= 5:
-        qty = int(round((6/mark_price), 0))
-    if (wallet_balance - order_size) <= 0:
+    if (value) <= 5:
+        print(f"El tamaño de la orden es menor a 5 USDT: {value}")
+        qty = int(round((5.5/mark_price), 1))
+        
+    if (wallet_balance - cost) <= 0:
         qty = None
-
+    
+    print(f"La cantidad a comprar es: {qty}")
     return qty
 
 
