@@ -2,10 +2,6 @@ import scripts.ST_Indicators as op
 import psutil
 import time
 import logging as log
-import sys
-import json
-import math
-import requests
 from pybit.unified_trading import HTTP
 from datetime import datetime
 from dotenv import load_dotenv
@@ -16,16 +12,15 @@ def Trading_setup():
     if Api_Key != None and Api_Secret != None:
         client = HTTP(testnet=False, api_key=Api_Key, api_secret=Api_Secret)
         print('Login successful')
-        CANTIDADES  = op.calcular_qty_posicion(client, COIN_SUPPORT, COIN_LEVERAGE) #Cantidades de monedas a comprar o vender
         MAX = len(COIN_SUPPORT) - 1
         Polaridad_l = [0] * len(COIN_SUPPORT)  #Lista donde se van a guardar las polaridades respectivas de cada moneda (Inicialmente [0,0])
-        posicion_list, Polaridad_l = op.get_live_orders(client, COIN_SUPPORT, CANTIDADES, Polaridad_l) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
+        posicion_list, Polaridad_l = op.get_live_orders(client, COIN_SUPPORT, Polaridad_l) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
         symb_cont = 0 #Contador de symbolos (Determina cual stock observar) (Inicialmente 0)
         while(True):
             print(f"CPU Usage: {psutil.cpu_percent(interval=1)}% | RAM Usage: {psutil.virtual_memory()[2]}% | Disk Usage: {psutil.disk_usage('/')[3]}%")
             for i in range(len(COIN_SUPPORT)): 
                 log.info(f"Entro al bucle de monedas: {COIN_SUPPORT[i]}")
-                posicion_list, Polaridad_l, symb_cont = op.Trading_logic(client,COIN_SUPPORT,'30', MAX, CANTIDADES, Polaridad_l, posicion_list, symb_cont)
+                posicion_list, Polaridad_l, symb_cont = op.Trading_logic(client,COIN_SUPPORT,'30', MAX, Polaridad_l, posicion_list, symb_cont)
             time.sleep(30) #Espera 30 segundos por ciclo
     else:
         log.error('No se han ingresado las credenciales')
@@ -43,16 +38,15 @@ def Trading_setup_LLT(ip_server: str, port_server: int):
             if Api_Key != None and Api_Secret != None:
                 client = HTTP(testnet=False, api_key=Api_Key, api_secret=Api_Secret)
                 print('Login successful')
-                CANTIDADES  = op.calcular_qty_posicion(client, COIN_SUPPORT, COIN_LEVERAGE) #Cantidades de monedas a comprar o vender
                 MAX = len(COIN_SUPPORT) - 1
-                Polaridad_l = [0] * len(COIN_SUPPORT)  #Lista donde se van a guardar las polaridades respectivas de cada moneda (Inicialmente [0,0])
-                posicion_list, Polaridad_l = op.get_live_orders(client, COIN_SUPPORT, CANTIDADES, Polaridad_l) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
+                Polaridad_l = [0] * len(COIN_SUPPORT)  #Lista donde se van a guardar las polaridades respectivas de cada moneda (Inicialmente [0,0,0])
+                posicion_list, Polaridad_l = op.get_live_orders(client, COIN_SUPPORT, Polaridad_l) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
                 symb_cont = 0 #Contador de symbolos (Determina cual stock observar) (Inicialmente 0)
                 while(True):
                     print(f"CPU Usage: {psutil.cpu_percent(interval=1)}% | RAM Usage: {psutil.virtual_memory()[2]}% | Disk Usage: {psutil.disk_usage('/')[3]}%")
                     for i in range(len(COIN_SUPPORT)): 
                         log.info(f"Entro al bucle de monedas: {COIN_SUPPORT[i]}")
-                        posicion_list, Polaridad_l, symb_cont = op.Trading_logic(client,COIN_SUPPORT,'30', MAX, CANTIDADES, Polaridad_l, posicion_list, symb_cont)
+                        posicion_list, Polaridad_l, symb_cont = op.Trading_logic(client,COIN_SUPPORT,'30', MAX, Polaridad_l, posicion_list, symb_cont)
                     s.sendall("Alive".encode('utf-8')) #Enviando Heartbeat
                     time.sleep(30) #Espera 30 segundos por ciclo
             else:
@@ -81,7 +75,6 @@ if __name__ == '__main__':
     Api_Secret = os.getenv('Api_Secret')
 
     COIN_SUPPORT = ['XRPUSDT','ONEUSDT', 'DOTUSDT'] #Monedas en las cuales se ejecutaran operaciones
-    COIN_LEVERAGE = [70,25,40] #Apalancamiento de cada una de las monedas
     
     #Configure log file
     logger = log.getLogger(__name__)

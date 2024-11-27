@@ -225,7 +225,10 @@ class Posicion:
         
         
     def sell_half(self, client):
-        half_amount = math.ceil(self.amount/2)
+        if (self.amount/2) < 1:
+            half_amount = round(self.amount/2, 3)
+        else:
+            half_amount = math.ceil(self.amount/2)
         if self.id != None and self.half_order == False:
             #En el caso de un Long
             if(self.side == 'Buy'):
