@@ -48,8 +48,11 @@ def calcular_qty_posicion(cliente, COIN_SYMBOL: str, entry: float, stoploss:floa
         qty = int(round((5.5/mark_price), 1))
 
     if (wallet_balance - cost) <= 0:
+        log.error(
+                f"El valor para realizar la orden es superior al balance. Wallet_Balance: {wallet_balance}, qty: {qty}, Cost:{cost}, Value: {value}, Stoploss_Prop: {stop_loss_proportion}")
         qty = None
-
+    
+    log.info(f"El valor con el cual se entra a la orden es {qty}")
     return qty
 
 
@@ -595,7 +598,7 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, Pol
                 cantidad = calcular_qty_posicion(client, symb, float(df['Close'].iloc[0]), float(df['Supertrend'].iloc[0]))
                 if cantidad == None:
                     log.info(
-                        f"El balance de la cuenta es insuficiente para comprar {symb}, Cantidad: {cantidad} [Quinto Tier]")
+                        f"El balance de la cuenta es insuficiente para comprar {symb} [Quinto Tier]")
                     return posicion_list, Polaridad_l, symb_cont
                 order = Posicion('Buy', symb, cantidad, df['Polaridad'].iloc[1], str(round(float(df['Supertrend'].iloc[0]), 4)), float(df['Close'].iloc[0]), str(
                     df['Time'].iloc[0]), float(df['Open'].iloc[0]), float(df['High'].iloc[0]), float(df['Low'].iloc[0]), float(df['Volume'].iloc[0]), float(df['DEMA800'].iloc[0]))
