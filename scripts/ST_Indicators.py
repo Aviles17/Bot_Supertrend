@@ -45,13 +45,11 @@ def calcular_qty_posicion(cliente, COIN_SYMBOL: str, entry: float, stoploss:floa
     
     # Aplicar Null safty para evitar errores en la ejecución de ordenes (Condición > 5 USDT)
     if (value) <= 5:
-        print(f"El tamaño de la orden es menor a 5 USDT: {value}")
         qty = int(round((5.5/mark_price), 1))
 
     if (wallet_balance - cost) <= 0:
         qty = None
 
-    print(f"La cantidad a comprar es: {qty}")
     return qty
 
 
@@ -72,7 +70,7 @@ def Get_Balance(cliente, symbol: str):
             balance = cliente.get_coin_balance(
                 accountType="CONTRACT", coin=symbol)
             if balance is not None:
-                filt_Balance = balance["result"]["balance"]["walletBalance"]
+                filt_Balance = balance["result"]["balance"]["transferBalance"]
         except RequestException as e:
             log.error(
                 f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
@@ -597,7 +595,7 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, Pol
                 cantidad = calcular_qty_posicion(client, symb, float(df['Close'].iloc[0]), float(df['Supertrend'].iloc[0]))
                 if cantidad == None:
                     log.info(
-                        f"El balance de la cuenta es insuficiente para comprar {symb} [Quinto Tier]")
+                        f"El balance de la cuenta es insuficiente para comprar {symb}, Cantidad: {cantidad} [Quinto Tier]")
                     return posicion_list, Polaridad_l, symb_cont
                 order = Posicion('Buy', symb, cantidad, df['Polaridad'].iloc[1], str(round(float(df['Supertrend'].iloc[0]), 4)), float(df['Close'].iloc[0]), str(
                     df['Time'].iloc[0]), float(df['Open'].iloc[0]), float(df['High'].iloc[0]), float(df['Low'].iloc[0]), float(df['Volume'].iloc[0]), float(df['DEMA800'].iloc[0]))
