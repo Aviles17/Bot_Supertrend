@@ -69,9 +69,9 @@ def Get_Balance(cliente, symbol: str):
     while (filt_Balance == -1):
         try:
             balance = cliente.get_coin_balance(
-                accountType="CONTRACT", coin=symbol)
+                accountType="UNIFIED", coin=symbol)
             if balance is not None:
-                filt_Balance = balance["result"]["balance"]["walletBalance"]
+                filt_Balance = balance["result"]["balance"]["transferBalance"]
         except RequestException as e:
             log.error(
                 f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
