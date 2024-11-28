@@ -19,8 +19,9 @@ from websocket._exceptions import WebSocketException
 [Retorna]: Retorna las cantidades de cada moneda que deben comprarse para seguir con nuestro modelo de 2% de riesgo.
 ####################################################################################
 '''
-
 # Calcula la cantidad de la moneda que se va a comprar o vender cada vez
+
+
 def calcular_qty_posicion(cliente, COIN_SYMBOL: str, entry: float, stoploss:float, risk:float = 0.02) -> list:
 
     # Llamado a la función para retornar el balance actual
@@ -36,7 +37,7 @@ def calcular_qty_posicion(cliente, COIN_SYMBOL: str, entry: float, stoploss:floa
     stop_loss_proportion = abs((entry - stoploss) / entry)
     value = (wallet_balance * risk) / stop_loss_proportion
     cost = value / 15
-    
+
     if (value / mark_price) < 1:
         qty = round((value / mark_price), 2)
     else:
@@ -46,10 +47,10 @@ def calcular_qty_posicion(cliente, COIN_SYMBOL: str, entry: float, stoploss:floa
     if (value) <= 5:
         print(f"El tamaño de la orden es menor a 5 USDT: {value}")
         qty = int(round((5.5/mark_price), 1))
-        
+
     if (wallet_balance - cost) <= 0:
         qty = None
-    
+
     print(f"La cantidad a comprar es: {qty}")
     return qty
 
@@ -583,7 +584,7 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, Pol
     posicion_list = Revisar_Arreglo(posicion_list, df, client, symb)
     if (Polaridad_l[symb_cont] != df['Polaridad'].iloc[1]):
         log.info(
-            f"La polaridad de {symb} guardada {Polaridad_l[symb_cont]} es diferenre  {df['Polaridad'].iloc[1]} [Primer Tier")
+            f"La polaridad de {symb} guardada {Polaridad_l[symb_cont]} es diferente  {df['Polaridad'].iloc[1]} [Primer Tier")
         '''
     Caso 1 : Para compra long en futures
     '''
