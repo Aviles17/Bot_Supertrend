@@ -70,8 +70,7 @@ def Get_Balance(cliente, symbol: str):
     filt_Balance = -1
     while (filt_Balance == -1):
         try:
-            balance = cliente.get_coin_balance(
-                accountType="CONTRACT", coin=symbol)
+            balance = cliente.get_coin_balance(accountType="UNIFIED", coin=symbol)
             if balance is not None:
                 filt_Balance = balance["result"]["balance"]["transferBalance"]
         except RequestException as e:
