@@ -45,13 +45,14 @@ def calcular_qty_posicion(cliente, COIN_SYMBOL: str, entry: float, stoploss:floa
     
     # Aplicar Null safty para evitar errores en la ejecución de ordenes (Condición > 5 USDT)
     if (value) <= 5:
-        print(f"El tamaño de la orden es menor a 5 USDT: {value}")
         qty = int(round((5.5/mark_price), 1))
 
     if (wallet_balance - cost) <= 0:
+        log.error(
+                f"El valor para realizar la orden es superior al balance. Wallet_Balance: {wallet_balance}, qty: {qty}, Cost:{cost}, Value: {value}, Stoploss_Prop: {stop_loss_proportion}")
         qty = None
-
-    print(f"La cantidad a comprar es: {qty}")
+    
+    log.info(f"El valor con el cual se entra a la orden es {qty}")
     return qty
 
 
@@ -69,10 +70,9 @@ def Get_Balance(cliente, symbol: str):
     filt_Balance = -1
     while (filt_Balance == -1):
         try:
-            balance = cliente.get_coin_balance(
-                accountType="CONTRACT", coin=symbol)
+            balance = cliente.get_coin_balance(accountType="UNIFIED", coin=symbol)
             if balance is not None:
-                filt_Balance = balance["result"]["balance"]["walletBalance"]
+                filt_Balance = balance["result"]["balance"]["transferBalance"]
         except RequestException as e:
             log.error(
                 f"Se encontro un error de conexión {e}. Reintentando en 10 segundos...\n")
