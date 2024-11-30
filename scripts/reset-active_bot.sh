@@ -24,5 +24,3 @@ for process_name in "${process_names[@]}"; do
     echo "No matching process found for '$process_name'."
   fi
 done
-
-scripts\start-VM.sh
