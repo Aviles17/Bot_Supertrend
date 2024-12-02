@@ -1,5 +1,4 @@
 import scripts.ST_Indicators as op
-import psutil
 import time
 import logging as log
 from pybit.unified_trading import HTTP
@@ -17,7 +16,6 @@ def Trading_setup():
         posicion_list, Polaridad_l = op.get_live_orders(client, COIN_SUPPORT, Polaridad_l) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
         symb_cont = 0 #Contador de symbolos (Determina cual stock observar) (Inicialmente 0)
         while(True):
-            print(f"CPU Usage: {psutil.cpu_percent(interval=1)}% | RAM Usage: {psutil.virtual_memory()[2]}% | Disk Usage: {psutil.disk_usage('/')[3]}%")
             for i in range(len(COIN_SUPPORT)): 
                 log.info(f"Entro al bucle de monedas: {COIN_SUPPORT[i]}")
                 posicion_list, Polaridad_l, symb_cont = op.Trading_logic(client,COIN_SUPPORT,'15', MAX, Polaridad_l, posicion_list, symb_cont)
@@ -43,7 +41,6 @@ def Trading_setup_LLT(ip_server: str, port_server: int):
                 posicion_list, Polaridad_l = op.get_live_orders(client, COIN_SUPPORT, Polaridad_l) #Lista que contendra las ordenes (Recupera ordenes abiertas a traves del API)
                 symb_cont = 0 #Contador de symbolos (Determina cual stock observar) (Inicialmente 0)
                 while(True):
-                    print(f"CPU Usage: {psutil.cpu_percent(interval=1)}% | RAM Usage: {psutil.virtual_memory()[2]}% | Disk Usage: {psutil.disk_usage('/')[3]}%")
                     for i in range(len(COIN_SUPPORT)): 
                         log.info(f"Entro al bucle de monedas: {COIN_SUPPORT[i]}")
                         posicion_list, Polaridad_l, symb_cont = op.Trading_logic(client,COIN_SUPPORT,'15', MAX, Polaridad_l, posicion_list, symb_cont)
@@ -55,13 +52,16 @@ def Trading_setup_LLT(ip_server: str, port_server: int):
 
     except ConnectionRefusedError as e:
         log.error(f"Connection refused -> {e}")
-        raise ConnectionRefusedError(f"Connection refused -> {e}")
+        print(e)
+        raise
     except BrokenPipeError as e:
         log.error(f"Broken pipe error - server not running? -> {e}")
-        raise BrokenPipeError(f"Broken pipe error - server not running? -> {e}")
+        print(e)
+        raise
     except Exception as e:
         log.error(f"Error inesperado -> {e}")
-        raise Exception(f"Error inesperado -> {e}")
+        print(e)
+        raise
 
 
 

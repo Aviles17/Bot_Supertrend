@@ -149,6 +149,7 @@ def get_live_orders(client, COIN_SUPPORT: list, Polaridad_l: list):
                     pos.half_order = True
 
                 result.append(pos)
+                log.info(f"Orden recuperada del API al inciiar proceso: {str(pos)}")
         return result, Polaridad_l
 
     else:
