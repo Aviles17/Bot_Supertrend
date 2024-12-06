@@ -602,6 +602,7 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, Pol
                     return posicion_list, Polaridad_l, symb_cont
                 order = Posicion('Buy', symb, cantidad, df['Polaridad'].iloc[1], str(round(float(df['Supertrend'].iloc[0]), 4)), float(df['Close'].iloc[0]), str(
                     df['Time'].iloc[0]), float(df['Open'].iloc[0]), float(df['High'].iloc[0]), float(df['Low'].iloc[0]), float(df['Volume'].iloc[0]), float(df['DEMA800'].iloc[0]))
+                log.info(f"El ojeto de orden es {str(order)}")
                 res = order.make_order(client)
                 log.info(f"La orden [{str(order)}] se ha abierto exitosamente")
                 posicion_list.append(order)
@@ -625,6 +626,7 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, Pol
                     return posicion_list, Polaridad_l, symb_cont
                 order = Posicion('Sell', symb, cantidad, df['Polaridad'].iloc[1], str(round(float(df['Supertrend'].iloc[0]), 4)), float(df['Close'].iloc[0]), str(
                     df['Time'].iloc[0]), float(df['Open'].iloc[0]), float(df['High'].iloc[0]), float(df['Low'].iloc[0]), float(df['Volume'].iloc[0]), float(df['DEMA800'].iloc[0]))
+                log.info(f"El ojeto de orden es {str(order)}")
                 res = order.make_order(client)
                 log.info(f"La orden [{str(order)}] se ha abierto exitosamente")
                 posicion_list.append(order)

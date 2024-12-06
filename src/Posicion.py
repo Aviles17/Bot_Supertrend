@@ -59,6 +59,7 @@ class Posicion:
                     slTriggerBy = 'MarkPrice',
                     positionIdx = self.position_idx
                 )
+                log.info(f"Respuesta de la orden: {res}")
                 self.id = res['result']['orderId']
                 break
             except RequestException as e:
