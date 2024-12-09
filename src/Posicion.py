@@ -59,6 +59,7 @@ class Posicion:
                     slTriggerBy = 'MarkPrice',
                     positionIdx = self.position_idx
                 )
+                log.info(f"Respuesta del API a la creación de la orden es: {res}")
                 self.id = res['result']['orderId']
                 break
             except RequestException as e:
@@ -72,8 +73,7 @@ class Posicion:
                     retry = True
                     log.error(f"Se encontro un error inesperado accediendo a la informacion {e}. Reintentando en 10 segundos...\n")
                     time.sleep(10)
-                else:
-                    print(f"Error en make_order {e.with_traceback()}")   
+                else:  
                     log.error(f"Se encontro un error inesperado despues del reintento: {e}.\n")
                     break
                     raise
@@ -116,11 +116,9 @@ class Posicion:
                         time.sleep(10)
                     elif isinstance(e, IndexError) and retry == False:
                         retry = True
-                        print(f"Error con reintento en coordinate {e.with_traceback()}") 
                         log.error(f"Se encontro un error inesperado accediendo a la informacion {e}. Reintentando en 10 segundos...\n")
                         time.sleep(10)
-                    else:
-                        print(f"Error en coordinate {e.with_traceback()}")      
+                    else:  
                         log.error(f"Se encontro un error inesperado despues del reintento: {e}.\n")
                         break
                         raise
