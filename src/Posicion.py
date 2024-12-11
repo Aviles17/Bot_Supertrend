@@ -36,6 +36,7 @@ class Posicion:
 
     def make_order(self, client):
         retry = False
+        res = None
         if self.side == 'Buy':
             self.position_idx = 1
         elif self.side == 'Sell':
@@ -79,8 +80,12 @@ class Posicion:
                     raise
         time.sleep(15) #Esperar 15 segundos para que la acción se complete en el portal
         self.coordinate_order(client) #Coordinar información con API
-        log.info(f"Orden {res['result']['orderId']} creada correctamente en BYBIT : {res} de {self.symbol}")
-        return res
+        if res != None:
+            log.info(f"Orden {res['result']['orderId']} creada correctamente en BYBIT : {res} de {self.symbol}")
+            return res
+        else:
+            log.error('La orden seleccionada no se ha creado correctamente')
+            return None
     
     def coordinate_order(self, client):
         retry = False #Variable de control para reintentos en caso de error al no encontrar la información en el API
