@@ -52,7 +52,14 @@ def calcular_qty_posicion(cliente, COIN_SYMBOL: str, entry: float, stoploss:floa
                 f"El valor para realizar la orden es superior al balance. Wallet_Balance: {wallet_balance}, qty: {qty}, Cost:{cost}, Value: {value}, Stoploss_Prop: {stop_loss_proportion}")
         qty = None
     
-    log.info(f"El valor con el cual se entra a la orden es {qty}")
+    if qty <= 0:
+        log.error(
+                f"El valor para realizar la orden es inferior a 0. Wallet_Balance: {wallet_balance}, qty: {qty}, Cost:{cost}, Value: {value}, Stoploss_Prop: {stop_loss_proportion}")
+        qty = None
+
+    
+    log.info(f"El valor con el cual se entra a la orden es {qty} -> Calculado de la siguiente forma: {wallet_balance} * {risk} / {stop_loss_proportion} = {value} / {mark_price} = {qty}")
+
     return qty
 
 
@@ -127,13 +134,16 @@ def get_live_orders(client, COIN_SUPPORT: list, Polaridad_l: list):
                     ori_side = 'Buy'
                     label = 1
                     Polaridad_l[COIN_SUPPORT.index(order['symbol'])] = label
+                    log.info(f"La polaridad de {order['symbol']} es {label} -> Cambios en el arreglo de polaridades {Polaridad_l}")
                 # Si es Buy en Bybit implica to be Buy -> Por ende es un Short
                 elif order['side'] == 'Buy':
                     ori_side = 'Sell'
                     label = -1
                     Polaridad_l[COIN_SUPPORT.index(order['symbol'])] = label
+                    log.info(f"La polaridad de {order['symbol']} es {label} -> Cambios en el arreglo de polaridades {Polaridad_l}")
                 else:
                     label = 0
+                    log.error(f"La polaridad de {order['symbol']} no cumple con las condiciones de del ssitema -> {order['side']}")
                 # Modificar el tiempo a formato estandar
                 utc_transform = datetime.fromtimestamp(
                     int(order['createdTime']) / 1000, tz=pytz.UTC)
@@ -145,7 +155,9 @@ def get_live_orders(client, COIN_SUPPORT: list, Polaridad_l: list):
                 pos.id = order['orderId']
 
                 # Correccion de integridad de los datos para eventos locales (Llegar a halfprice)
-                if float(pos.price) <= float(pos.stoploss) or int(order['createdTime']) < int(order['updatedTime']):
+                if float(pos.price) <= float(pos.stoploss) and pos.side == 'Buy':
+                    pos.half_order = True
+                if float(pos.price) >= float(pos.stoploss) and pos.side == 'Sell':
                     pos.half_order = True
 
                 result.append(pos)
@@ -599,12 +611,19 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, Pol
                 if cantidad == None:
                     log.info(
                         f"El balance de la cuenta es insuficiente para comprar {symb} [Quinto Tier]")
+                    Polaridad_l[symb_cont] = Polaridad_Manage(Polaridad_l[symb_cont], df)
                     return posicion_list, Polaridad_l, symb_cont
                 order = Posicion('Buy', symb, cantidad, df['Polaridad'].iloc[1], str(round(float(df['Supertrend'].iloc[0]), 4)), float(df['Close'].iloc[0]), str(
                     df['Time'].iloc[0]), float(df['Open'].iloc[0]), float(df['High'].iloc[0]), float(df['Low'].iloc[0]), float(df['Volume'].iloc[0]), float(df['DEMA800'].iloc[0]))
                 log.info(f"El objeto orden fue creado exitosamente {str(order)}")
                 res = order.make_order(client)
-                log.info(f"La orden [{str(order)}] se ha abierto exitosamente")
+                if res != None:
+                    log.info(f"La orden [{str(order)}] se ha abierto exitosamente [Sexto Tier]")
+                else:
+                    log.error(f"Error al abrir la orden: {res}")
+                    Polaridad_l[symb_cont] = Polaridad_Manage(Polaridad_l[symb_cont], df)
+                    return posicion_list, Polaridad_l, symb_cont
+
                 posicion_list.append(order)
                 Polaridad_l[symb_cont] = df['Polaridad'].iloc[1]
                 log.info(
@@ -623,12 +642,18 @@ def Trading_logic(client, symb_list: list, interval: str, MAX_CURRENCY: int, Pol
                 if cantidad == None:
                     log.info(
                         f"El balance de la cuenta es insuficiente para comprar {symb} [Quinto Tier]")
+                    Polaridad_l[symb_cont] = Polaridad_Manage(Polaridad_l[symb_cont], df)
                     return posicion_list, Polaridad_l, symb_cont
                 order = Posicion('Sell', symb, cantidad, df['Polaridad'].iloc[1], str(round(float(df['Supertrend'].iloc[0]), 4)), float(df['Close'].iloc[0]), str(
                     df['Time'].iloc[0]), float(df['Open'].iloc[0]), float(df['High'].iloc[0]), float(df['Low'].iloc[0]), float(df['Volume'].iloc[0]), float(df['DEMA800'].iloc[0]))
                 log.info(f"El objeto orden fue creado exitosamente {str(order)}")
                 res = order.make_order(client)
-                log.info(f"La orden [{str(order)}] se ha abierto exitosamente")
+                if res != None:
+                    log.info(f"La orden [{str(order)}] se ha abierto exitosamente [Sexto Tier]")
+                else:
+                    log.error(f"Error al abrir la orden: {res}")
+                    Polaridad_l[symb_cont] = Polaridad_Manage(Polaridad_l[symb_cont], df)
+                    return posicion_list, Polaridad_l, symb_cont
                 posicion_list.append(order)
                 Polaridad_l[symb_cont] = df['Polaridad'].iloc[1]
                 log.info(
