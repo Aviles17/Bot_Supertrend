@@ -46,7 +46,7 @@ def calcular_qty_posicion(cliente, COIN_SYMBOL: str, entry: float, stoploss:floa
     # Aplicar Null safty para evitar errores en la ejecución de ordenes (Condición > 5 USDT)
     if (value) <= 5:
         print(f"El tamaño de la orden es menor a 5 USDT: {value}")
-        qty = int(round((5.5/mark_price), 1))
+        qty = round(round((5.6/mark_price), 1))
 
     if (wallet_balance - cost) <= 0:
         qty = None
